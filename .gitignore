@@ -1,0 +1,4 @@
+build/
+Releases/
+.vs/
+*.user

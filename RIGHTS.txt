@@ -1,0 +1,15 @@
+﻿HPDG — Copyright notice
+© 2026 HamloProd. All rights reserved.
+
+HamloProd owns the original HPDG program code, the interface design, the
+name and the project's original materials. HPDG is not distributed under an
+open-source license. This beta may be used for testing and music creation
+without an activation key. Copying, modifying or distributing HPDG's original
+code and materials requires permission from HamloProd unless separately agreed.
+
+This notice gives HamloProd no rights to the user's music: music created with
+HPDG remains the user's work. Third-party libraries, fonts and audio samples
+remain the property of their respective owners. They are not claimed as
+HamloProd's property; their owners' terms apply. See
+Documentation/THIRD-PARTY-NOTICES.txt and the notices kept in the Samples
+library. Renaming a sample does not change its origin.

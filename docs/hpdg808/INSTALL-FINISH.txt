@@ -1,0 +1,9 @@
+HPDG 808 is installed.
+
+1. Open your 64-bit DAW and rescan VST3 plugins.
+2. Add HPDG 808 to an instrument track (it is a synth: it takes MIDI notes).
+3. Pick a preset at the top, play a few notes around A1 - C2.
+
+No DAW at hand: Start menu -> HamloProd -> HPDG 808 (the Standalone).
+Guide: Start menu -> HamloProd -> HPDG 808 Guide.
+If Windows asks for a restart, do it before opening your DAW.
