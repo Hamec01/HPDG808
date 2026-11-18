@@ -1,10 +1,10 @@
 {
   "product": "hpdg808",
-  "version": "1.0.1",
-  "title": "HPDG 808 1.0.1",
-  "notes": "HPDG 808 1.0.1: the MIX tab shows LAYERS, WEIGHT and ENVELOPE in two rows, so the Sustain and Release knobs are no longer cut off. HPDG 808 is the bass instrument from HPDG as its own VST3 and Standalone for Windows: 200 presets by genre and substyle, an 808 synth with Punch, Tone Fall and Swell, a sample layer, a saturator, a mastering section for bass (MASTER) and Export WAV / drag of the finished one-shot.",
+  "version": "1.0.2",
+  "title": "HPDG 808 1.0.2",
+  "notes": "HPDG 808 1.0.2: the 200 factory presets made again from a full fitting run over 1309 real 808 recordings, each closer to the 808 it was made from; same names and levels. HPDG 808 is the bass instrument from HPDG as its own VST3 and Standalone for Windows: 200 presets by genre and substyle, an 808 synth with Punch, Tone Fall and Swell, a sample layer, a saturator, a mastering section for bass (MASTER) and Export WAV / drag of the finished one-shot.",
   "page": "https://hamloprod.org/en/vst/hpdg808",
-  "objectKey": "hpdg808/HPDG808_Setup_1.0.1.exe",
-  "sha256": "10df71991565863f835b31ebf0c805f6ca99981bd2e465a0be1ff29586775c90",
-  "size": 23291370
+  "objectKey": "hpdg808/HPDG808_Setup_1.0.2.exe",
+  "sha256": "9d750890c4b7302097da05a6891947aaa9253c8a18d0b914794a4fdbfe1163e6",
+  "size": 23289291
 }

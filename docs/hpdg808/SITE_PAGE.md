@@ -6,7 +6,7 @@ A visual mock of this page: `docs/hpdg808/site/index.html`.
 
 ## Hero
 
-Label (pill): `1.0.1 · WINDOWS 10/11 · VST3 · STANDALONE`
+Label (pill): `1.0.2 · WINDOWS 10/11 · VST3 · STANDALONE`
 
 Title: **HPDG 808**  (badge next to it: **NEW**)
 
@@ -21,7 +21,7 @@ Bullets:
 
 Buttons: `GET HPDG 808 — <price>` · `WATCH THE VIDEO` (only if a video exists)
 
-Small line under the buttons: `VERSION 1.0.1 · WINDOWS 10/11 64-BIT · VST3 + STANDALONE · NO ACTIVATION`
+Small line under the buttons: `VERSION 1.0.2 · WINDOWS 10/11 64-BIT · VST3 + STANDALONE · NO ACTIVATION`
 
 Hero picture: the SYNTH screenshot (`images/hpdg808_synth.png`), in the frame where HPDG shows its pattern grid.
 
@@ -33,7 +33,7 @@ Hero picture: the SYNTH screenshot (`images/hpdg808_synth.png`), in the frame wh
 
 ## Release block
 
-Label: `NEW PLUGIN / 1.0.1 · <release date>`
+Label: `NEW PLUGIN / 1.0.2 · <release date>`
 
 Headline: **THE 808 FROM HPDG. NOW ON ITS OWN.**
 

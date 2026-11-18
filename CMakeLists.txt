@@ -2,7 +2,7 @@
 
 # HPDG 808: the HPDG bass engine as its own instrument (VST3 + Standalone, Windows x64).
 # The version is written only here; Installer/Build-HPDG808.ps1 reads it.
-set(HPDG808_VERSION 1.0.1)
+set(HPDG808_VERSION 1.0.2)
 project(HPDG808 VERSION ${HPDG808_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)

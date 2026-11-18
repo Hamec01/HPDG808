@@ -1,4 +1,4 @@
-build/
-Releases/
+/build/
+/Releases/
 .vs/
 *.user
