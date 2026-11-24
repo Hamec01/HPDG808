@@ -12,12 +12,21 @@ dt{font-weight:600;margin-top:10px}dd{margin-left:18px}
 </style>
 <body>
 <h1>HPDG 808</h1>
-<p>HamloProd bass instrument, version 1.0.2. Windows 10/11 x64, VST3 and Standalone.</p>
+<p>HamloProd bass instrument, version 1.1.0. Windows 10/11 x64, VST3 and Standalone.</p>
+<p><b>New in 1.1:</b> the Sound Library (search, filters, favorites), section presets, OSC B, Draw Wave, LOAD REF +
+AUTO DRAW and the SYNTH preview with PLAY and scrub. See the sections below.</p>
 
 <h2>Start</h2>
 <p>Add HPDG 808 to an instrument track and play MIDI notes. 808s sit best between A0 and C2. Choose a sound
 from the preset menu at the top (or step with &lt; &gt;): presets are grouped by genre, and each name tells its
 substyle and character, for example <code>Dark Trap - Long Dark Grit</code>.</p>
+<p>Click the preset name to open the <b>Sound Library</b>: search by name, genre, category or character
+(Clean, Punch, Grit, Slide, Warm, Dark, Short ...), filter by genre, and press the star to keep a sound in
+<b>Favorites</b>. <b>My presets</b> lists the sounds you saved. Enter loads the selected sound and closes the
+library; &lt; &gt; at the top then steps through the filtered list.</p>
+<p>Every tab has its own <b>section preset</b> menu (SYNTH PRESET, MIX PRESET ...): it loads only that part of the
+sound, for example a new envelope and tone on SYNTH while your sample, mix and master stay. SAVE AS stores the
+section as your own, RESET takes the section back to the loaded preset. 35 section presets are included.</p>
 <p>PLAY sounds a note without a keyboard. Mode sets how notes join: <b>Retrigger</b> starts every note anew,
 <b>Legato</b> keeps the note going and changes its pitch, <b>Glide</b> slides to the next note over the Glide time
 (808 slides: overlap two notes in the piano roll).</p>
@@ -35,6 +44,22 @@ low end at the hit.</dd>
 recorded 808s), Hold, Decay, Sustain, Release.</dd>
 </dl>
 
+<h2>SYNTH: preview, drawing and references</h2>
+<dl>
+<dt>Preview</dt><dd>The strip at the top shows the last note you played, rendered with the current sound. PLAY
+repeats it from the orange cursor; click or drag the waveform to hear that moment. BPM (HOST when the DAW sends a
+tempo) and Snap (Off, 1/4 ... 1/32) set the beat grid.</dd>
+<dt>Draw Wave</dt><dd>NEW PRESET starts from a flat cycle; drag across the grid to draw your own oscillator wave
+while a note plays. DRAW switches between your drawing and the Wave selector, UNDO and CLEAR work on the drawing.
+Mouse wheel zooms into the cycle (up to 32x), Shift + wheel moves along it, a double click resets the view. The
+drawing is saved with the preset and the project.</dd>
+<dt>LOAD REF and AUTO DRAW</dt><dd>LOAD REF (or drop a file on the SYNTH screen) shows an 808 recording, up to
+10 seconds, as a purple guide. AUTO DRAW in <b>FULL</b> rebuilds the whole recording as a row of wave frames with
+their own time, level and pitch: the sound keeps the reference's changing tone and length, plays on any key, and
+every frame can be redrawn (pick it in the Frame menu). <b>CYCLE</b> takes one wave cycle from the part you
+select. The reference itself is only a picture: it is not mixed into the sound or the export.</dd>
+</dl>
+
 <h2>SAMPLE</h2>
 <p>LOAD an 808, a kick or any bass sample (WAV, AIFF, FLAC, MP3, OGG) or drop it on the screen. Set Start, End and
 Loop Start on the waveform. FOLLOW KEY plays it at the note's pitch; LOCK TIME keeps its length on every note;
@@ -42,7 +67,8 @@ Stretch makes it longer or shorter; REVERSE and INVERT flip it. The sample and t
 
 <h2>MIX</h2>
 <p>The levels of the synth and the sample. Handoff lets the sample (a kick) play first and then crossfades into the
-synth: a kick that turns into an 808. Phantom adds the harmonics that make the bass audible on phones and laptops.</p>
+synth: a kick that turns into an 808. <b>OSC B</b> adds harmonics 2 to 8 over the note (Level, Shape, Decay,
+Sustain): the 808 line stays readable on phones and laptops while the sub stays the same. Phantom adds the harmonics that make the bass audible on phones and laptops.</p>
 
 <h2>FILTER / FX</h2>
 <p>Filter: LP12, LP24, HP12, BP or Vowel, with Key tracking, its own envelope (Env, Env Decay) and an LFO (free or
@@ -67,8 +93,9 @@ opens in <code>Documents\HamloProd\Bass808 Exports</code>. DRAG: drag that note 
 onto the desktop.</p>
 
 <h2>Your presets</h2>
-<p>SAVE stores the sound (and its sample) in <code>Documents\HamloProd\Bass808 Presets</code>. They appear in the
-preset menu, and in HPDG's Sub808 lane too.</p>
+<p>SAVE stores the sound (and its sample, its drawing and its frames) in
+<code>Documents\HamloProd\Bass808 Presets</code>. They appear under My presets in the Sound Library, and in HPDG's
+Sub808 lane too. Projects and presets from 1.0 open and sound the same.</p>
 
 <h2>Questions</h2>
 <p>Not in the DAW's list: rescan VST3 plugins; HPDG 808 is in <code>C:\Program Files\Common Files\VST3</code>.

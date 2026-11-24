@@ -4,6 +4,7 @@
 
 #include "Audio/Synth808Voice.h"
 #include "Bass808/Bass808Widgets.h"
+#include "Bass808/BassExport.h"
 #include "Bass808/BassMaster.h"
 #include "Bass808/BassSaturator.h"
 
@@ -99,6 +100,26 @@ float peakOf(const std::vector<float>& data)
     return peak;
 }
 
+template <typename GetSample>
+std::vector<float> overview(size_t length, GetSample sample)
+{
+    const auto columns = std::min<size_t>(1024, length);
+    std::vector<float> result(2 * columns);
+    for (size_t x = 0; x < columns; ++x)
+    {
+        float lo = 0.0f, hi = 0.0f;
+        for (size_t i = x * length / columns; i < (x + 1) * length / columns; ++i)
+        {
+            const float value = sample(i);
+            lo = std::min(lo, value);
+            hi = std::max(hi, value);
+        }
+        result[2 * x] = lo;
+        result[2 * x + 1] = hi;
+    }
+    return result;
+}
+
 // Seconds until the level (20 ms RMS) is `dropDb` under its peak.
 double timeToDrop(const std::vector<float>& data, double rate, double dropDb)
 {
@@ -125,13 +146,327 @@ double timeToDrop(const std::vector<float>& data, double rate, double dropDb)
 
 Bass808Screen::Bass808Screen(Bass808Processor& processor) : bass(processor)
 {
+    if (bass.apvts.getParameter("oscADraw") != nullptr)
+    {
+        drawButton.setClickingTogglesState(true);
+        drawButton.setTooltip("Draw one cycle for oscillator A");
+        undoButton.setTooltip("Undo the last pencil stroke or clear");
+        clearButton.setTooltip("Flatten the drawn waveform");
+        newPresetButton.setTooltip("Start an empty drawn-wave preset");
+        drawAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(bass.apvts, "oscADraw", drawButton);
+        for (auto* button : { &drawButton, &undoButton, &clearButton, &newPresetButton, &referenceButton, &clearReferenceButton, &autoButton })
+            addChildComponent(*button);
+        autoButton.onClick = [this] { autoDraw(); };
+        autoMode.addItem("FULL", 1);
+        autoMode.addItem("CYCLE", 2);
+        autoMode.setSelectedId(1);
+        autoMode.onChange = [this] { syncReference(); repaint(); };
+        autoMode.setName("Auto Draw mode");
+        autoMode.setTooltip("FULL rebuilds the whole reference. CYCLE extracts one repeating waveform.");
+        addChildComponent(autoMode);
+        frameSelector.setName("Sequence frame");
+        frameSelector.onChange = [this] { selectSequenceFrame(); };
+        addChildComponent(frameSelector);
+        autoButton.setTooltip("Extract one stable cycle from the selected reference window");
+        bpmValue.setEditable(false, true);
+        bpmValue.setText(juce::String(bass.hostTempo(), 2), juce::dontSendNotification);
+        tempoSource.setText(bass.tempoFromHost() ? "HOST" : "BPM", juce::dontSendNotification);
+        bpmValue.setTooltip("Manual BPM when host tempo is unavailable");
+        bpmValue.onTextChange = [this] { bass.setManualTempo(bpmValue.getText().getDoubleValue()); };
+        tempoSource.setFont(juce::FontOptions(10.0f));
+        bpmValue.setFont(juce::FontOptions(12.0f));
+        for (auto* label : { &bpmValue, &tempoSource })
+        {
+            label->setColour(juce::Label::textColourId, colour::tealBright);
+            addChildComponent(*label);
+        }
+        snapBox.addItem("Snap Off", 1);
+        for (int division : { 4, 8, 16, 32 })
+            snapBox.addItem("Snap 1/" + juce::String(division), division);
+        snapBox.setSelectedId(bass.snapDivision() == 0 ? 1 : bass.snapDivision(), juce::dontSendNotification);
+        snapBox.onChange = [this] { bass.setSnapDivision(snapBox.getSelectedId()); repaint(); };
+        addChildComponent(snapBox);
+        referenceButton.setTooltip("Load at most the first ten seconds as a silent drawing guide");
+        clearReferenceButton.setTooltip("Remove the reference overlay");
+        referenceButton.onClick = [this] { if (onLoadReference) onLoadReference(); };
+        clearReferenceButton.onClick = [this]
+        {
+            bass.setWaveformReference(nullptr);
+            syncReference();
+        };
+        referenceWindow.setName("Reference window");
+        referenceWindow.setRange(1.0, Bass808Reference::kMaxSeconds * 1000.0, 0.1);
+        referenceWindow.setSkewFactorFromMidPoint(18.0);
+        referenceWindow.setSliderStyle(juce::Slider::LinearHorizontal);
+        referenceWindow.setTextBoxStyle(juce::Slider::TextBoxRight, false, 61, 20);
+        referenceWindow.setTextValueSuffix(" ms");
+        referenceWindow.setTooltip("Length of the reference slice stretched to one drawn cycle");
+        referenceWindow.onValueChange = [this]
+        {
+            bass.setReferenceWindow(reference.start, referenceWindow.getValue() / 1000.0);
+            syncReference();
+        };
+        addChildComponent(referenceWindow);
+
+        undoButton.onClick = [this]
+        {
+            syncDrawWave();
+            if (drawUndo.empty())
+                return;
+            auto undo = std::move(drawUndo.back());
+            drawUndo.pop_back();
+            auto restoredWave = std::move(undo.wave);
+            if (undo.reference.audio == reference.audio)
+                bass.setReferenceWindow(undo.reference.start, undo.reference.window);
+            setParameter("oscADraw", undo.enabled ? 1.0f : 0.0f);
+            setParameter("attack", undo.attack);
+            setParameter("hold", undo.hold);
+            setParameter("decay", undo.decay);
+            setParameter("sustain", undo.sustain);
+            setParameter("swell", undo.swell);
+            setParameter("punch", undo.punch);
+            setParameter("tune", undo.tune);
+            bass.setPreviewNote(undo.note);
+            syncReference();
+            bass.setDrawWave(std::move(restoredWave));
+            auto history = std::move(drawUndo);
+            syncDrawWave();
+            drawUndo = std::move(history);
+            settleTicks = 3;
+            previewDirty = true;
+            repaint();
+        };
+        clearButton.onClick = [this]
+        {
+            syncDrawWave();
+            const BassDrawWave::Points flat {};
+            if (drawPoints == flat)
+                return;
+            rememberDrawWave();
+            drawPoints = flat;
+            drawPending = true;
+            publishDrawWave();
+        };
+        newPresetButton.onClick = [this]
+        {
+            drawViewStart = 0.0;
+            drawViewWidth = 1.0;
+            if (onNewPreset)
+                onNewPreset();
+            previewCursor = 0.0;
+            syncDrawWave();
+        };
+    }
     live.resize(4096);
     startTimerHz(30);
 }
 
 void Bass808Screen::setMode(Mode newMode)
 {
+    if (newMode != Synth && usesSynthTimeline())
+        stopPreview();
+    const bool showTools = drawAttachment != nullptr && newMode == Synth;
+    for (auto* button : { &drawButton, &undoButton, &clearButton, &newPresetButton, &referenceButton, &autoButton })
+        button->setVisible(showTools);
+    bpmValue.setVisible(showTools);
+    tempoSource.setVisible(showTools);
+    snapBox.setVisible(showTools);
+    autoMode.setVisible(showTools);
+    frameSelector.setVisible(showTools && visibleDrawWave != nullptr && !visibleDrawWave->frames().empty());
     mode = newMode;
+    syncReference();
+    settleTicks = 1;
+    setMouseCursor(juce::MouseCursor::NormalCursor);
+    repaint();
+}
+
+void Bass808Screen::resized()
+{
+    const int x = getWidth() - 12;
+    newPresetButton.setBounds(x - 108, 5, 108, 22);
+    clearButton.setBounds(x - 178, 5, 64, 22);
+    undoButton.setBounds(x - 248, 5, 64, 22);
+    drawButton.setBounds(x - 318, 5, 64, 22);
+    referenceButton.setBounds(x - 433, 5, 79, 22);
+    clearReferenceButton.setBounds(x - 348, 5, 24, 22);
+    const auto ref = referenceArea().toNearestInt();
+    referenceWindow.setBounds(ref.getRight() + 12, ref.getY(), 146, 23);
+    tempoSource.setBounds(146, 5, 57, 22);
+    bpmValue.setBounds(203, 5, 64, 22);
+    snapBox.setBounds(270, 5, 100, 22);
+    autoButton.setBounds(372, 5, 84, 22);
+    autoMode.setBounds(458, 5, 74, 22);
+    frameSelector.setBounds(getWidth() - 171, juce::roundToInt(drawingArea().getY()) - 17, 154, 17);
+}
+
+bool Bass808Screen::drawingEnabled() const
+{
+    const auto* param = bass.apvts.getRawParameterValue("oscADraw");
+    return mode == Synth && param != nullptr && param->load() >= 0.5f;
+}
+
+void Bass808Screen::syncDrawWave()
+{
+    auto wave = bass.getDrawWave();
+    if (wave == visibleDrawWave)
+        return;
+    visibleDrawWave = std::move(wave);
+    frameSelector.clear(juce::dontSendNotification);
+    if (visibleDrawWave != nullptr && !visibleDrawWave->frames().empty())
+    {
+        const auto& frames = visibleDrawWave->frames();
+        for (size_t i = 0; i < frames.size(); ++i)
+            frameSelector.addItem("Frame " + juce::String(static_cast<int>(i + 1)) + " / " + juce::String(frames[i].time, 3) + " s", static_cast<int>(i + 1));
+        selectedFrame = std::min(selectedFrame, frames.size() - 1);
+        frameSelector.setSelectedId(static_cast<int>(selectedFrame + 1), juce::dontSendNotification);
+    }
+    frameSelector.setVisible(usesSynthTimeline() && frameSelector.getNumItems() > 0);
+    drawPoints = visibleDrawWave != nullptr ? visibleDrawWave->points() : BassDrawWave::Points {};
+    if (frameSelector.getNumItems() > 0) drawPoints = visibleDrawWave->frames()[selectedFrame].points;
+    drawUndo.clear();
+    drawPending = false;
+    strokePoint = -1;
+    settleTicks = 3;
+    previewDirty = true;
+    repaint();
+}
+
+void Bass808Screen::rememberDrawWave()
+{
+    if (drawUndo.size() == 32)
+        drawUndo.erase(drawUndo.begin());
+    const auto settings = bass.currentSettings();
+    drawUndo.push_back({ visibleDrawWave, bass.waveformReference(), drawingEnabled(), settings.attackMs,
+                         settings.holdSeconds, settings.decaySeconds, settings.sustain, settings.swellDb,
+                         settings.punchSemitones, settings.tuneSemitones, bass.lastNote() });
+}
+
+void Bass808Screen::selectSequenceFrame()
+{
+    if (visibleDrawWave == nullptr || visibleDrawWave->frames().empty()) return;
+    selectedFrame = static_cast<size_t>(std::max(0, frameSelector.getSelectedId() - 1));
+    selectedFrame = std::min(selectedFrame, visibleDrawWave->frames().size() - 1);
+    const auto& frame = visibleDrawWave->frames()[selectedFrame];
+    drawPoints = frame.points;
+    bass.setReferenceWindow(frame.time, 1.0 / frame.hz);
+    syncReference();
+    repaint();
+}
+
+bool Bass808Screen::editingSequence() const
+{
+    return visibleDrawWave != nullptr && !visibleDrawWave->frames().empty();
+}
+
+Bass808Processor::ReferenceView Bass808Screen::drawingReference() const
+{
+    auto view = reference;
+    if (editingSequence())
+    {
+        const auto& frames = visibleDrawWave->frames();
+        const auto& frame = frames[std::min(selectedFrame, frames.size() - 1)];
+        view.start = frame.time;
+        view.window = 1.0 / frame.hz;
+    }
+    return view;
+}
+
+void Bass808Screen::autoDraw()
+{
+    syncDrawWave();
+    syncReference();
+    if (autoMode.getSelectedId() == 1)
+    {
+        auto sequence = reference.audio != nullptr ? reference.audio->resynthesize() : nullptr;
+        if (sequence == nullptr)
+        {
+            autoStatus = "No pitched bass found in this reference.";
+            repaint();
+            return;
+        }
+        rememberDrawWave();
+        bass.setDrawWave(sequence);
+        setParameter("oscADraw", 1.0f);
+        setParameter("sustain", 1.0f);
+        setParameter("swell", 0.0f);
+        setParameter("punch", 0.0f);
+        const double midi = 69.0 + 12.0 * std::log2(sequence->rootHz() / 440.0);
+        const int note = juce::roundToInt(midi);
+        bass.setPreviewNote(note);
+        setParameter("tune", static_cast<float>(midi - note));
+        selectedFrame = 0;
+        // Preserve the undo entry while refreshing the sequence frame menu.
+        auto history = std::move(drawUndo);
+        syncDrawWave();
+        drawUndo = std::move(history);
+        selectSequenceFrame();
+        previewCursor = 0.0;
+        autoStatus = "Full " + juce::String(sequence->duration(), 3) + " s";
+        repaint();
+        return;
+    }
+    Bass808Reference::Cycle cycle;
+    Bass808Reference::Envelope envelope;
+    if (reference.audio == nullptr || !reference.audio->findCycle(reference.start, reference.window, cycle)
+        || !reference.audio->fitEnvelope(envelope))
+    {
+        autoStatus = "No stable cycle. Select a sustained part of the reference.";
+        repaint();
+        return;
+    }
+    rememberDrawWave();
+    drawPoints = cycle.points;
+    bass.setDrawWave(std::make_shared<const BassDrawWave>(drawPoints));
+    auto history = std::move(drawUndo);
+    syncDrawWave();
+    drawUndo = std::move(history);
+    setParameter("oscADraw", 1.0f);
+    setParameter("attack", envelope.attackMs);
+    setParameter("hold", envelope.holdSeconds);
+    setParameter("decay", envelope.decaySeconds);
+    setParameter("sustain", 0.0f);
+    setParameter("swell", 0.0f);
+    bass.setReferenceWindow(cycle.start, cycle.seconds);
+    syncReference();
+    autoStatus = "Cycle " + juce::String(1.0 / cycle.seconds, 1) + " Hz";
+    repaint();
+}
+
+void Bass808Screen::publishDrawWave()
+{
+    if (!drawPending)
+        return;
+    visibleDrawWave = visibleDrawWave != nullptr ? visibleDrawWave->editFrame(selectedFrame, drawPoints)
+                                                : std::make_shared<const BassDrawWave>(drawPoints);
+    bass.setDrawWave(visibleDrawWave);
+    drawPending = false;
+    settleTicks = 3;
+    previewDirty = true;
+    repaint();
+}
+
+void Bass808Screen::drawTo(juce::Point<float> position)
+{
+    const auto area = drawingArea();
+    if (area.isEmpty())
+        return;
+    const double fraction = juce::jlimit(0.0f, 1.0f, (position.x - area.getX()) / area.getWidth());
+    const int point = juce::roundToInt(BassDrawWave::kSize * (drawViewStart + drawViewWidth * fraction));
+    const float value = juce::jlimit(-1.0f, 1.0f, (area.getCentreY() - position.y) / (area.getHeight() * 0.45f));
+    if (strokePoint < 0 || strokePoint == point)
+        drawPoints[static_cast<size_t>(point % BassDrawWave::kSize)] = value;
+    else
+    {
+        const int step = point > strokePoint ? 1 : -1;
+        for (int i = strokePoint + step; i != point + step; i += step)
+        {
+            const float t = static_cast<float>(i - strokePoint) / static_cast<float>(point - strokePoint);
+            drawPoints[static_cast<size_t>(i % BassDrawWave::kSize)] = strokeValue + t * (value - strokeValue);
+        }
+    }
+    strokePoint = point;
+    strokeValue = value;
+    drawPending = true;
     repaint();
 }
 
@@ -140,8 +475,158 @@ juce::Rectangle<float> Bass808Screen::plotArea() const
     return getLocalBounds().toFloat().reduced(14.0f, 12.0f).withTrimmedTop(18.0f);
 }
 
+juce::Rectangle<float> Bass808Screen::timelineArea() const
+{
+    return plotArea().withTrimmedTop(16.0f).withHeight(54.0f);
+}
+
+juce::Rectangle<float> Bass808Screen::referenceArea() const
+{
+    return plotArea().withTrimmedTop(84.0f).withHeight(23.0f).withTrimmedRight(165.0f);
+}
+
+juce::Rectangle<float> Bass808Screen::drawingArea() const
+{
+    return plotArea().withTrimmedTop(reference.audio != nullptr ? 128.0f : 88.0f);
+}
+
+bool Bass808Screen::loadReference(const juce::File& file)
+{
+    auto audio = Bass808Reference::load(file);
+    if (audio == nullptr)
+        return false;
+    bass.setWaveformReference(std::move(audio));
+    syncReference();
+    return true;
+}
+
+void Bass808Screen::syncReference()
+{
+    if (drawAttachment == nullptr)
+        return;
+    const auto next = bass.waveformReference();
+    const bool sourceChanged = next.audio != reference.audio;
+    if (sourceChanged)
+    {
+        referenceOverview.clear();
+        if (next.audio != nullptr)
+            referenceOverview = overview(next.audio->points.size(), [&](size_t i) { return next.audio->points[i]; });
+    }
+    if (sourceChanged || next.start != reference.start || next.window != reference.window)
+        repaint();
+    reference = next;
+    if (reference.audio != nullptr && editingSequence())
+    {
+        const auto view = drawingReference();
+        bass.setReferenceWindow(view.start, view.window);
+        reference = bass.waveformReference();
+    }
+    const bool showing = usesSynthTimeline() && reference.audio != nullptr;
+    clearReferenceButton.setVisible(showing);
+    referenceWindow.setVisible(showing);
+    referenceWindow.setEnabled(!editingSequence());
+    referenceWindow.setTooltip(editingSequence() ? "Length of the selected FULL frame. Choose a frame in the overview or Frame menu."
+                                               : "Length of the reference slice stretched to one drawn cycle");
+    if (showing)
+        referenceWindow.setValue(reference.window * 1000.0, juce::dontSendNotification);
+}
+
+void Bass808Screen::moveReferenceTo(float x)
+{
+    if (reference.audio == nullptr)
+        return;
+    const auto area = referenceArea();
+    const double fraction = juce::jlimit(0.0f, 1.0f, (x - area.getX()) / area.getWidth());
+    if (editingSequence())
+    {
+        const double at = fraction * reference.audio->duration();
+        const auto& frames = visibleDrawWave->frames();
+        const auto closest = std::min_element(frames.begin(), frames.end(), [at](const auto& a, const auto& b)
+                                              { return std::abs(a.time - at) < std::abs(b.time - at); });
+        frameSelector.setSelectedId(static_cast<int>(closest - frames.begin() + 1), juce::dontSendNotification);
+        selectSequenceFrame();
+        return;
+    }
+    bass.setReferenceWindow(bass.snapTime(fraction * reference.audio->duration(), reference.audio->duration() - reference.window), reference.window);
+    syncReference();
+}
+
+void Bass808Screen::refreshPreview()
+{
+    auto clip = BassExport::render(bass.currentSettings(), bass.getSample(), bass.lastNote(), bass.hostTempo(), Bass808Preview::kRate);
+    // A blank drawing can keep playing while the first pencil stroke is being made.
+    if (clip.getNumSamples() <= 1)
+    {
+        clip.setSize(2, static_cast<int>(BassExport::kHeldSeconds * Bass808Preview::kRate));
+        clip.clear();
+    }
+    previewClip = std::make_shared<const Bass808Preview::Clip>(std::move(clip));
+    const auto* l = previewClip->getReadPointer(0);
+    const auto* r = previewClip->getReadPointer(1);
+    previewOverview = overview(static_cast<size_t>(previewClip->getNumSamples()),
+                               [&](size_t i) { return 0.5f * (l[i] + r[i]); });
+    bass.synthPreview().setClip(previewClip);
+    previewCursor = std::min(previewCursor, previewClip->getNumSamples() / Bass808Preview::kRate);
+    previewDirty = false;
+    previewWait = 0;
+    repaint();
+}
+
+void Bass808Screen::startPreview()
+{
+    refreshPreview();
+    previewPlaying = true;
+    bass.synthPreview().setPosition(Bass808Preview::Playing, previewCursor);
+    repaint();
+}
+
+void Bass808Screen::stopPreview()
+{
+    if (!previewPlaying && !scrubbing && previewClip == nullptr)
+        return;
+    if (previewPlaying && !scrubbing)
+        previewCursor = bass.synthPreview().position();
+    previewPlaying = scrubbing = false;
+    bass.synthPreview().setPosition(Bass808Preview::Stopped, previewCursor);
+    repaint();
+}
+
+void Bass808Screen::scrubTo(float x)
+{
+    if (previewDirty || previewClip == nullptr)
+        refreshPreview();
+    const auto area = timelineArea();
+    const double end = previewClip->getNumSamples() / Bass808Preview::kRate;
+    const double fraction = juce::jlimit(0.0f, 1.0f, (x - area.getX()) / area.getWidth());
+    previewCursor = bass.snapTime(fraction * end, end);
+    bass.synthPreview().setPosition(Bass808Preview::Scrubbing, previewCursor);
+    repaint();
+}
+
 void Bass808Screen::timerCallback()
 {
+    if (drawAttachment != nullptr)
+    {
+        syncDrawWave();
+        publishDrawWave();
+        syncReference();
+        autoButton.setEnabled(reference.audio != nullptr);
+        const double bpm = bass.hostTempo();
+        const bool host = bass.tempoFromHost();
+        tempoSource.setText(host ? "HOST" : "BPM", juce::dontSendNotification);
+        bpmValue.setEditable(false, !host);
+        if (!bpmValue.isBeingEdited())
+            bpmValue.setText(juce::String(bpm, 2), juce::dontSendNotification);
+        snapBox.setSelectedId(bass.snapDivision() == 0 ? 1 : bass.snapDivision(), juce::dontSendNotification);
+        if (shownTempo != bpm)
+        {
+            shownTempo = bpm;
+            previewDirty = true;
+        }
+        const bool enabled = drawingEnabled();
+        undoButton.setEnabled(!drawUndo.empty());
+        clearButton.setEnabled(enabled);
+    }
     // re-render the previews when the knobs, the sample or the note changed (and then held still 100 ms)
     std::vector<float> now;
     for (auto* parameter : bass.getParameters())
@@ -153,11 +638,19 @@ void Bass808Screen::timerCallback()
         renderedSample = sample;
         renderedNote = bass.lastNote();
         settleTicks = 3;
+        previewDirty = true;
         repaint();
     }
     if (settleTicks > 0 && --settleTicks == 0)
     {
         renderPreviews();
+        repaint();
+    }
+    if (usesSynthTimeline() && previewDirty && ++previewWait >= (previewPlaying ? 2 : 3))
+        refreshPreview();
+    if (previewPlaying && !scrubbing)
+    {
+        previewCursor = bass.synthPreview().position();
         repaint();
     }
 
@@ -172,16 +665,20 @@ void Bass808Screen::timerCallback()
 void Bass808Screen::renderPreviews()
 {
     settings = bass.currentSettings();
+    if (usesSynthTimeline())
+        return;
     const int note = renderedNote;
     full = BassEngine::renderNote(settings, renderedSample, note, kSeconds, kRate);
     synthLayer.clear();
     sampleLayer.clear();
-    if (renderedSample != nullptr && settings.sampleLevelDb > -59.5f && settings.synthLevelDb > -59.5f)
+    const bool hasSynth = settings.synthLevelDb > -59.5f || settings.oscBLevelDb > BassSettings::kOscBOffDb;
+    if (renderedSample != nullptr && settings.sampleLevelDb > -59.5f && hasSynth)
     {
         // each layer with the other one almost silent (not off: the handoff stays as it is)
         auto onlySynth = settings, onlySample = settings;
         onlySynth.sampleLevelDb = -59.0f;
         onlySample.synthLevelDb = -59.0f;
+        onlySample.oscBLevelDb = BassSettings::kOscBOffDb;
         synthLayer = BassEngine::renderNote(onlySynth, renderedSample, note, kMixSeconds, kRate);
         sampleLayer = BassEngine::renderNote(onlySample, renderedSample, note, kMixSeconds, kRate);
     }
@@ -202,12 +699,166 @@ void Bass808Screen::paint(juce::Graphics& g)
     const auto area = plotArea();
     switch (mode)
     {
-        case Synth: paintSynth(g, area); break;
+        case Synth:
+            if (!usesSynthTimeline())
+                paintSynth(g, area);
+            else
+            {
+                paintTimeline(g);
+                if (reference.audio != nullptr)
+                    paintReference(g);
+                paintDrawWave(g, drawingArea());
+            }
+            break;
         case Sample: paintSample(g, area); break;
         case Mix: paintMix(g, area); break;
         case Effects: paintEffects(g, area); break;
         case Master: paintMaster(g, area); break;
     }
+}
+
+void Bass808Screen::paintBeatGrid(juce::Graphics& g, juce::Rectangle<float> area, double duration)
+{
+    if (duration <= 0.0)
+        return;
+    const double beat = 240.0 / (bass.hostTempo() * bass.beatDenominator());
+    const int numerator = bass.beatsPerBar();
+    const int division = bass.snapDivision();
+    const double step = division > 0 ? std::min(beat, 240.0 / (bass.hostTempo() * division)) : beat;
+    const int count = static_cast<int>(std::ceil(duration / step));
+    float lastLabel = -100.0f;
+    for (int i = 0; i <= count; ++i)
+    {
+        const double at = i * step;
+        if (at > duration)
+            break;
+        const double beatIndex = at / beat;
+        const int nearest = juce::roundToInt(beatIndex);
+        const bool wholeBeat = std::abs(beatIndex - nearest) < 1.0e-5;
+        const bool bar = wholeBeat && nearest % numerator == 0;
+        const float x = area.getX() + area.getWidth() * static_cast<float>(at / duration);
+        if (step * area.getWidth() / duration >= 4.0 || wholeBeat)
+        {
+            g.setColour(colour::tealBright.withAlpha(bar ? 0.65f : wholeBeat ? 0.34f : 0.14f));
+            g.drawVerticalLine(juce::roundToInt(x), area.getY(), area.getBottom());
+        }
+        if (wholeBeat && x - lastLabel >= 40.0f && x + 35.0f < area.getRight())
+        {
+            label(g, juce::String(nearest / numerator + 1) + "." + juce::String(nearest % numerator + 1),
+                  { x + 3.0f, area.getBottom() - 12.0f, 38.0f, 12.0f }, colour::text, 10.0f);
+            lastLabel = x;
+        }
+    }
+}
+
+void Bass808Screen::paintTimeline(juce::Graphics& g)
+{
+    const auto area = timelineArea();
+    label(g, "SYNTH PREVIEW  " + noteName(bass.lastNote()), area.withY(9.0f).withHeight(16.0f), colour::accentGlow, 12.0f);
+    grid(g, area, 0, 2);
+    if (previewClip == nullptr)
+        return;
+    const double end = previewClip->getNumSamples() / Bass808Preview::kRate;
+    const double at = previewPlaying && !scrubbing ? bass.synthPreview().position() : previewCursor;
+    drawWave(g, previewOverview, 0, previewOverview.size(), area.reduced(0.0f, 2.0f), colour::teal,
+             0.86f / peakOf(previewOverview));
+    paintBeatGrid(g, area, end);
+    const auto ruler = area.withY(area.getY() - 16.0f).withHeight(14.0f);
+    label(g, "0.00 s", ruler, colour::textMuted, 11.0f);
+    label(g, juce::String(end, 2) + " s", ruler, colour::textMuted, 11.0f, juce::Justification::topRight);
+    const float x = area.getX() + area.getWidth() * static_cast<float>(juce::jlimit(0.0, 1.0, at / end));
+    g.setColour(colour::accentGlow);
+    g.drawLine(x, area.getY() - 1.0f, x, area.getBottom(), previewPlaying || scrubbing ? 1.8f : 1.0f);
+    label(g, juce::String(at, 3) + " s", ruler, colour::accentGlow, 11.0f, juce::Justification::centred);
+}
+
+void Bass808Screen::paintReference(juce::Graphics& g)
+{
+    const auto area = referenceArea();
+    const auto end = reference.audio->duration();
+    const auto colourRef = juce::Colour::fromRGB(160, 147, 219);
+    grid(g, area, 0, 2);
+    drawWave(g, referenceOverview, 0, referenceOverview.size(), area, colourRef.withAlpha(0.54f),
+             0.85f / peakOf(referenceOverview));
+    if (visibleDrawWave != nullptr && !visibleDrawWave->frames().empty())
+    {
+        g.setColour(colourRef.withAlpha(0.10f));
+        g.fillRect(area);
+    }
+    paintBeatGrid(g, area, end);
+    const float left = area.getX() + area.getWidth() * static_cast<float>(reference.start / end);
+    const float width = area.getWidth() * static_cast<float>(reference.window / end);
+    g.setColour(colourRef.withAlpha(0.32f));
+    g.fillRect(area.withX(left).withWidth(std::max(1.0f, width)));
+    g.setColour(colourRef);
+    g.drawVerticalLine(juce::roundToInt(left), area.getY(), area.getBottom());
+    const auto caption = area.withY(area.getY() - 13.0f).withHeight(12.0f);
+    const auto trim = reference.audio->truncated ? "  /  FIRST 10 S" : "";
+    label(g, "REF  " + reference.audio->name + trim, caption.withTrimmedRight(110.0f), colourRef, 10.5f);
+    label(g, juce::String(reference.start, 3) + " / " + juce::String(end, 2) + " s", caption,
+          colourRef, 10.5f, juce::Justification::topRight);
+}
+
+void Bass808Screen::paintDrawWave(juce::Graphics& g, juce::Rectangle<float> area)
+{
+    const auto title = area.withY(area.getY() - 15.0f).withHeight(14.0f);
+    label(g, visibleDrawWave != nullptr && !visibleDrawWave->frames().empty() ? "OSC A  /  FRAME" : "OSC A  /  ONE CYCLE",
+          title, colour::accentGlow, 11.0f);
+    label(g, autoStatus, title.withTrimmedLeft(155.0f), colour::textMuted, 10.5f);
+    label(g, juce::String(1.0 / drawViewWidth, 1) + "x", title.withTrimmedRight(frameSelector.isVisible() ? 166.0f : 0.0f),
+          colour::tealBright, 11.0f, juce::Justification::topRight);
+    const juce::Graphics::ScopedSaveState saved(g);
+    g.reduceClipRegion(area.toNearestInt());
+    const float fullWidth = area.getWidth() / static_cast<float>(drawViewWidth);
+    area = area.withX(area.getX() - fullWidth * static_cast<float>(drawViewStart)).withWidth(fullWidth);
+    grid(g, area, 32, 4);
+    if (reference.audio != nullptr)
+    {
+        std::array<float, BassDrawWave::kSize + 1> guide;
+        const auto& audio = *reference.audio;
+        const auto view = drawingReference();
+        float peak = 1.0e-6f;
+        double mean = 0.0;
+        for (size_t i = 0; i < guide.size(); ++i)
+        {
+            const double index = audio.rate * (view.start + view.window * i / BassDrawWave::kSize);
+            const auto a = std::min(audio.points.size() - 1, static_cast<size_t>(index));
+            const auto b = std::min(a + 1, audio.points.size() - 1);
+            guide[i] = static_cast<float>(audio.points[a] + (index - a) * (audio.points[b] - audio.points[a]));
+            if (i < BassDrawWave::kSize) mean += guide[i] / BassDrawWave::kSize;
+        }
+        // Match the same DC removal and normalization used when extracting the frame.
+        for (size_t i = 0; i < guide.size(); ++i)
+        {
+            if (editingSequence()) guide[i] -= static_cast<float>(mean);
+            if (i < BassDrawWave::kSize) peak = std::max(peak, std::abs(guide[i]));
+        }
+        drawLine(g, guide.data(), static_cast<int>(guide.size()), area, juce::Colour::fromRGB(160, 147, 219).withAlpha(0.54f),
+                 1.2f, 0.9f / peak);
+    }
+    if (!drawingEnabled())
+    {
+        if (reference.audio != nullptr)
+            label(g, "Enable DRAW to trace the reference", area.withTrimmedTop(5.0f), colour::textMuted, 12.0f,
+                  juce::Justification::centredTop);
+        else if (previewClip != nullptr)
+        {
+            const auto* wave = previewClip->getReadPointer(0);
+            const double hz = BassEngine::noteHz(bass.lastNote(), settings.tuneSemitones);
+            const int count = previewClip->getNumSamples();
+            const int start = std::min(count / 3, static_cast<int>(0.20 * Bass808Preview::kRate));
+            const int visible = std::min(count - start, static_cast<int>(3.0 * Bass808Preview::kRate / hz));
+            drawLine(g, wave + start, visible, area, colour::accentGlow, 1.4f, 0.9f / peakOf(previewOverview));
+        }
+        return;
+    }
+    std::array<float, BassDrawWave::kSize + 1> cycle;
+    std::copy(drawPoints.begin(), drawPoints.end(), cycle.begin());
+    cycle.back() = cycle.front();
+    drawLine(g, cycle.data(), static_cast<int>(cycle.size()), area, colour::accentGlow, 1.7f, 1.0f);
+    if (reference.audio == nullptr && std::all_of(drawPoints.begin(), drawPoints.end(), [](float x) { return x == 0.0f; }))
+        label(g, "Draw a wave here. Press PLAY or hold a MIDI note.", area.withTrimmedTop(14.0f),
+              colour::textMuted, 13.0f, juce::Justification::centredTop);
 }
 
 void Bass808Screen::paintSynth(juce::Graphics& g, juce::Rectangle<float> area)
@@ -257,7 +908,8 @@ void Bass808Screen::paintSynth(juce::Graphics& g, juce::Rectangle<float> area)
     static const char* waves[] { "SINE", "TRIANGLE", "SAW", "SQUARE", "REESE" };
     label(g, juce::String("NOTE  ") + noteName(renderedNote) + "  " + juce::String(hz, 1) + " Hz   " + waves[juce::jlimit(0, 4, settings.wave)],
           getLocalBounds().toFloat().reduced(14.0f, 8.0f), colour::text, 12.0f);
-    label(g, "WAVEFORM", cycleArea.withY(getLocalBounds().toFloat().getY() + 8.0f).withHeight(16.0f), colour::textMuted, 11.0f);
+    if (drawAttachment == nullptr)
+        label(g, "WAVEFORM", cycleArea.withY(8.0f).withHeight(16.0f), colour::textMuted, 11.0f);
     label(g, "1.6 s", noteArea.withHeight(14.0f).translated(0.0f, -16.0f), colour::textMuted, 11.0f, juce::Justification::topRight);
 }
 
@@ -716,6 +1368,15 @@ void Bass808Screen::paintMaster(juce::Graphics& g, juce::Rectangle<float> area)
 
 void Bass808Screen::mouseMove(const juce::MouseEvent& event)
 {
+    if (usesSynthTimeline())
+    {
+        const bool timeline = timelineArea().contains(event.position)
+            || (reference.audio != nullptr && referenceArea().contains(event.position));
+        const bool pencil = drawingEnabled() && drawingArea().contains(event.position);
+        setMouseCursor(timeline ? juce::MouseCursor::LeftRightResizeCursor
+                                : pencil ? juce::MouseCursor::CrosshairCursor : juce::MouseCursor::NormalCursor);
+        return;
+    }
     const int now = mode == Sample ? markerAt(event.position) : -1;
     if (now != hovering)
     {
@@ -727,6 +1388,32 @@ void Bass808Screen::mouseMove(const juce::MouseEvent& event)
 
 void Bass808Screen::mouseDown(const juce::MouseEvent& event)
 {
+    if (event.getNumberOfClicks() > 1 && drawingArea().contains(event.position))
+        return;
+    if (usesSynthTimeline() && event.mods.isLeftButtonDown())
+    {
+        if (timelineArea().contains(event.position))
+        {
+            scrubbing = true;
+            previewDirty = true;
+            scrubTo(event.position.x);
+            return;
+        }
+        if (reference.audio != nullptr && referenceArea().contains(event.position))
+        {
+            movingReference = true;
+            moveReferenceTo(event.position.x);
+            return;
+        }
+    }
+    if (drawingEnabled() && event.mods.isLeftButtonDown() && drawingArea().contains(event.position))
+    {
+        syncDrawWave();
+        rememberDrawWave();
+        strokePoint = -1;
+        drawTo(event.position);
+        return;
+    }
     dragging = -1;
     dragId = nullptr;
     if (mode == Sample && renderedSample != nullptr)
@@ -744,6 +1431,21 @@ void Bass808Screen::mouseDown(const juce::MouseEvent& event)
 
 void Bass808Screen::mouseDrag(const juce::MouseEvent& event)
 {
+    if (scrubbing)
+    {
+        scrubTo(event.position.x);
+        return;
+    }
+    if (movingReference)
+    {
+        moveReferenceTo(event.position.x);
+        return;
+    }
+    if (strokePoint >= 0 && drawingEnabled())
+    {
+        drawTo(event.position);
+        return;
+    }
     if (dragId == nullptr)
         return;
     const auto area = plotArea();
@@ -767,8 +1469,44 @@ void Bass808Screen::mouseDrag(const juce::MouseEvent& event)
     repaint();
 }
 
+void Bass808Screen::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+{
+    if (!usesSynthTimeline() || !drawingArea().contains(event.position))
+        return;
+    const double delta = wheel.deltaY;
+    if (event.mods.isShiftDown() || std::abs(wheel.deltaX) > std::abs(delta))
+    {
+        const double pan = event.mods.isShiftDown() ? delta : wheel.deltaX;
+        drawViewStart = juce::jlimit(0.0, 1.0 - drawViewWidth, drawViewStart - pan * drawViewWidth);
+    }
+    else
+    {
+        const auto area = drawingArea();
+        const double anchor = juce::jlimit(0.0f, 1.0f, (event.position.x - area.getX()) / area.getWidth());
+        const double phase = drawViewStart + anchor * drawViewWidth;
+        drawViewWidth = juce::jlimit(1.0 / 32.0, 1.0, drawViewWidth * std::exp(-delta * 3.0));
+        drawViewStart = juce::jlimit(0.0, 1.0 - drawViewWidth, phase - anchor * drawViewWidth);
+    }
+    repaint();
+}
+
+void Bass808Screen::mouseDoubleClick(const juce::MouseEvent& event)
+{
+    if (usesSynthTimeline() && drawingArea().contains(event.position))
+    {
+        drawViewStart = 0.0;
+        drawViewWidth = 1.0;
+        repaint();
+    }
+}
+
 void Bass808Screen::mouseUp(const juce::MouseEvent&)
 {
+    if (scrubbing && previewPlaying)
+        bass.synthPreview().setPosition(Bass808Preview::Playing, previewCursor);
+    scrubbing = movingReference = false;
+    publishDrawWave();
+    strokePoint = -1;
     if (dragId != nullptr)
         if (auto* parameter = bass.apvts.getParameter(dragId))
             parameter->endChangeGesture();

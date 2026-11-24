@@ -2,7 +2,7 @@
 
 # HPDG 808: the HPDG bass engine as its own instrument (VST3 + Standalone, Windows x64).
 # The version is written only here; Installer/Build-HPDG808.ps1 reads it.
-set(HPDG808_VERSION 1.0.2)
+set(HPDG808_VERSION 1.1.0)
 project(HPDG808 VERSION ${HPDG808_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
@@ -11,6 +11,7 @@ set(JUCE_TARGET_ARCHITECTURE "x86_64")
 
 # JUCE 8.0.12, vendored in JUCE/
 add_subdirectory(JUCE)
+include(CTest)
 
 juce_add_plugin(HPDG808
     VERSION ${HPDG808_VERSION}
@@ -35,9 +36,11 @@ endif()
 target_sources(HPDG808
     PRIVATE
         Source/Bass808/Bass808Processor.cpp
+        Source/Bass808/Bass808Preview.cpp
         Source/Bass808/Bass808Editor.cpp
         Source/Bass808/Bass808Screen.cpp
         Source/Bass808/BassEngine.cpp
+        Source/Bass808/BassDrawWave.cpp
         Source/Bass808/BassSample.cpp
         Source/Bass808/BassSettingsIO.cpp
         Source/Bass808/BassSaturator.cpp
@@ -66,4 +69,29 @@ target_link_libraries(HPDG808
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+if (BUILD_TESTING)
+    add_executable(HPDG_Bass808Snapshot
+        Tests/Bass808Snapshot.cpp
+        Tests/Bass808OscBLab.cpp
+        Tests/Bass808PresetsLab.cpp
+    )
+    target_include_directories(HPDG_Bass808Snapshot PRIVATE Source)
+    target_link_libraries(HPDG_Bass808Snapshot
+        PRIVATE HPDG808 juce::juce_audio_utils juce::juce_gui_basics juce::juce_dsp
+        PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags
+    )
+    add_test(NAME HPDG808_PresetBrowser COMMAND HPDG_Bass808Snapshot
+        --preset-browser-check "${CMAKE_BINARY_DIR}/checks/preset-browser")
+    add_test(NAME HPDG808_DrawWave COMMAND HPDG_Bass808Snapshot
+        --draw-check "${CMAKE_BINARY_DIR}/checks/draw-wave")
+    add_test(NAME HPDG808_SynthTimeline COMMAND HPDG_Bass808Snapshot
+        --timeline-check "${CMAKE_BINARY_DIR}/checks/synth-timeline")
+    add_test(NAME HPDG808_AutoGrid COMMAND HPDG_Bass808Snapshot
+        --auto-grid-check "${CMAKE_BINARY_DIR}/checks/auto-grid")
+    add_test(NAME HPDG808_OscB COMMAND HPDG_Bass808Snapshot
+        --osc-b "${CMAKE_BINARY_DIR}/checks/osc-b")
+    set_tests_properties(HPDG808_PresetBrowser HPDG808_DrawWave HPDG808_SynthTimeline
+        HPDG808_AutoGrid HPDG808_OscB PROPERTIES TIMEOUT 240)
+endif()
 

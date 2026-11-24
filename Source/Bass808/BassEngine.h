@@ -90,6 +90,8 @@ private:
     void updateRegion();
     double readRegion(double position) const noexcept;
     double synthSample(double level) noexcept;
+    double oscBSample(double level) noexcept;
+    double classicOscillator(double phaseIncrement) noexcept;
     double clickSample() noexcept;
     double sampleSample() noexcept;
     double filterSample(double x, double lfo) noexcept;
@@ -107,6 +109,13 @@ private:
 
     // synth
     double phase = 0.0, phase2 = 0.0, phaseSub = 0.0, punch = 0.0, punchDecay = 1.0, boost = 0.0, boostDecay = 1.0;
+    struct DrawSource
+    {
+        std::shared_ptr<const BassDrawWave> wave;
+        bool enabled = false;
+    };
+    DrawSource drawFrom, drawTo;
+    int drawFadeSamples = 1, drawFadeRemaining = 0;
     double click = 0.0, clickDecay = 1.0;
     std::uint32_t noise = 0x12345678u;
     std::array<Biquad, 2> clickBand {};
@@ -114,6 +123,9 @@ private:
     bool toneOpen = false;
     double fallState = 0.0, fallCoefficient = 1.0; // Tone Fall's one-pole low-pass
     double tanhDrive = 1.0, tanhBias = 0.0, dcIn = 0.0, dcOut = 0.0, dcCoefficient = 0.9995;
+
+    double oscBPhase = 0.0, oscBEnvelope = 1.0, oscBDecay = 1.0;
+    double oscBGain = 0.0, oscBGainTarget = 0.0, oscBShape = 0.0, oscBSustain = 0.0;
 
     // envelope
     double amp = 1.0, ampDecay = 1.0;

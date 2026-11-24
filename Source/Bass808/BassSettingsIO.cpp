@@ -1,4 +1,5 @@
 #include "BassSettingsIO.h"
+#include "BassDrawWave.h"
 
 namespace bbg
 {
@@ -7,6 +8,7 @@ namespace
 const juce::Identifier kSettingsNode { "BassSettings" };
 const juce::Identifier kPresetNode { "HPDG808Preset" };
 const juce::Identifier kSampleNode { "Sample" };
+const juce::Identifier kDrawWaveNode { "DrawWave" };
 
 struct FloatField { const char* id; float BassSettings::*member; };
 struct IntField { const char* id; int BassSettings::*member; };
@@ -17,6 +19,8 @@ constexpr FloatField kFloats[] {
     { "punchSemitones", &BassSettings::punchSemitones }, { "punchMs", &BassSettings::punchMs }, { "drive", &BassSettings::drive },
     { "bias", &BassSettings::bias }, { "saturation", &BassSettings::saturation }, { "toneHz", &BassSettings::toneHz }, { "toneFallOct", &BassSettings::toneFallOct },
     { "clickDb", &BassSettings::clickDb }, { "boostDb", &BassSettings::boostDb },
+    { "oscBLevel", &BassSettings::oscBLevelDb }, { "oscBShape", &BassSettings::oscBShape },
+    { "oscBDecay", &BassSettings::oscBDecayMs }, { "oscBSustain", &BassSettings::oscBSustain },
     { "attackMs", &BassSettings::attackMs }, { "swellDb", &BassSettings::swellDb }, { "swellMs", &BassSettings::swellMs }, { "holdSeconds", &BassSettings::holdSeconds }, { "decaySeconds", &BassSettings::decaySeconds },
     { "sustain", &BassSettings::sustain }, { "releaseMs", &BassSettings::releaseMs },
     { "sampleLevelDb", &BassSettings::sampleLevelDb }, { "sampleTune", &BassSettings::sampleTune }, { "sampleFine", &BassSettings::sampleFine },
@@ -41,12 +45,88 @@ constexpr IntField kInts[] {
     { "masterSub", &BassSettings::masterSub }, { "masterHarmType", &BassSettings::masterHarmType },
 };
 constexpr BoolField kBools[] {
+    { "oscADraw", &BassSettings::drawWaveEnabled },
     { "sampleLoop", &BassSettings::sampleLoop }, { "sampleLockTime", &BassSettings::sampleLockTime },
     { "sampleFollow", &BassSettings::sampleFollow }, { "sampleReverse", &BassSettings::sampleReverse },
     { "sampleInvert", &BassSettings::sampleInvert }, { "lfoRetrigger", &BassSettings::lfoRetrigger },
     { "masterLimit", &BassSettings::masterLimit },
 };
 } // namespace
+
+void writeDrawWave(juce::ValueTree& parent, const std::shared_ptr<const BassDrawWave>& wave)
+{
+    if (wave == nullptr)
+        return;
+    juce::MemoryOutputStream bytes;
+    for (float point : wave->points())
+        bytes.writeFloat(point);
+    juce::ValueTree child(kDrawWaveNode);
+    child.setProperty("points", bytes.getMemoryBlock().toBase64Encoding(), nullptr);
+    if (!wave->frames().empty())
+    {
+        // Preserve all double precision in XML, including on long sequences.
+        child.setProperty("duration", juce::String(wave->duration(), 17, true), nullptr);
+        child.setProperty("root", juce::String(wave->rootHz(), 17, true), nullptr);
+        for (const auto& frame : wave->frames())
+        {
+            juce::ValueTree item("Frame");
+            juce::MemoryOutputStream samples;
+            for (float x : frame.points) samples.writeFloat(x);
+            item.setProperty("points", samples.getMemoryBlock().toBase64Encoding(), nullptr);
+            item.setProperty("time", juce::String(frame.time, 17, true), nullptr);
+            item.setProperty("hz", juce::String(frame.hz, 17, true), nullptr);
+            item.setProperty("gain", frame.gain, nullptr);
+            child.appendChild(item, nullptr);
+        }
+    }
+    parent.appendChild(child, nullptr);
+}
+
+std::shared_ptr<const BassDrawWave> readDrawWave(const juce::ValueTree& parent)
+{
+    const auto child = parent.getChildWithName(kDrawWaveNode);
+    if (!child.isValid())
+        return nullptr;
+    if (child.getNumChildren() > 0)
+    {
+        const double duration = child.getProperty("duration", 0.0), root = child.getProperty("root", 0.0);
+        if (!std::isfinite(duration) || duration <= 0.0 || duration > 10.0 || !std::isfinite(root)
+            || root < 20.0 || root > 400.0 || child.getNumChildren() > 256)
+            return nullptr;
+        std::vector<BassDrawWave::Frame> frames;
+        for (const auto& item : child)
+        {
+            BassDrawWave::Frame frame;
+            frame.time = item.getProperty("time", -1.0); frame.hz = item.getProperty("hz", 0.0);
+            frame.gain = static_cast<float>(item.getProperty("gain", 0.0));
+            juce::MemoryBlock samples;
+            const auto data = item.getProperty("points").toString();
+            if (!std::isfinite(frame.time) || frame.time < 0.0 || frame.time >= duration
+                || (!frames.empty() && frame.time <= frames.back().time) || !std::isfinite(frame.hz)
+                || frame.hz < 20.0 || frame.hz > 4000.0 || !std::isfinite(frame.gain) || frame.gain < 0.0f || frame.gain > 2.0f
+                || data.length() > 4096 || !samples.fromBase64Encoding(data) || samples.getSize() != BassDrawWave::kSize * sizeof(float))
+                return nullptr;
+            juce::MemoryInputStream input(samples, false);
+            for (float& x : frame.points)
+            {
+                x = input.readFloat();
+                if (!std::isfinite(x) || std::abs(x) > 1.0f) return nullptr;
+            }
+            frames.push_back(frame);
+        }
+        if (frames.size() < 2) return nullptr;
+        return std::make_shared<const BassDrawWave>(std::move(frames), duration, root);
+    }
+    const auto encoded = child.getProperty("points").toString();
+    juce::MemoryBlock bytes;
+    if (encoded.length() > 4096 || !bytes.fromBase64Encoding(encoded) || bytes.getSize() != BassDrawWave::kSize * sizeof(float))
+        return nullptr;
+    juce::MemoryInputStream stream(bytes, false);
+    BassDrawWave::Points points;
+    for (float& point : points)
+        point = stream.readFloat();
+    return std::make_shared<const BassDrawWave>(points);
+}
 
 juce::ValueTree bassSettingsToTree(const BassSettings& settings)
 {
@@ -57,6 +137,7 @@ juce::ValueTree bassSettingsToTree(const BassSettings& settings)
         tree.setProperty(f.id, settings.*(f.member), nullptr);
     for (const auto& f : kBools)
         tree.setProperty(f.id, settings.*(f.member), nullptr);
+    writeDrawWave(tree, settings.drawnWave);
     return tree;
 }
 
@@ -74,6 +155,7 @@ BassSettings bassSettingsFromTree(const juce::ValueTree& tree)
     for (const auto& f : kBools)
         if (tree.hasProperty(f.id))
             settings.*(f.member) = static_cast<bool>(tree.getProperty(f.id));
+    settings.drawnWave = readDrawWave(tree);
     settings.wave = juce::jlimit(0, BassSettings::NumWaves - 1, settings.wave);
     settings.filterType = juce::jlimit(0, BassSettings::NumFilters - 1, settings.filterType);
     settings.satModel = juce::jlimit(0, 6, settings.satModel);

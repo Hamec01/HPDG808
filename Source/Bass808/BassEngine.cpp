@@ -1,4 +1,5 @@
 #include "BassEngine.h"
+#include "BassDrawWave.h"
 #include "BassSettingsIO.h"
 
 #include <algorithm>
@@ -151,15 +152,32 @@ void BassVoice::prepare(double newSampleRate)
     phantomRelease = std::exp(-1.0 / (0.03 * sampleRate));
     grainLength = 2 * juce::jmax(16, static_cast<int>(0.0225 * sampleRate)); // 45 ms, even
     knobGlide = 1.0 - std::exp(-1.0 / (0.01 * sampleRate));
+    drawFadeSamples = std::max(1, static_cast<int>(0.005 * sampleRate));
     active = false;
 }
 
 void BassVoice::setSettings(const BassSettings& newSettings, float newSynthGain)
 {
+    const DrawSource next { newSettings.drawWaveEnabled ? newSettings.drawnWave : nullptr, newSettings.drawWaveEnabled };
+    if (!active)
+    {
+        drawFrom = {};
+        drawTo = next;
+        drawFadeRemaining = 0;
+    }
+    else if (drawFadeRemaining == 0 && (drawTo.enabled != next.enabled || drawTo.wave != next.wave))
+    {
+        drawFrom = drawTo;
+        drawTo = next;
+        drawFadeRemaining = drawFadeSamples;
+    }
     settings = newSettings;
     synthGain = newSynthGain;
     tanhDrive = std::tanh(static_cast<double>(settings.drive));
     tanhBias = std::tanh(static_cast<double>(settings.drive) * settings.bias);
+    oscBGainTarget = settings.oscBLevelDb > BassSettings::kOscBOffDb
+        ? 0.8 * dbToGain(juce::jlimit(BassSettings::kOscBOffDb, 0.0f, settings.oscBLevelDb)) : 0.0;
+    oscBDecay = std::exp(-std::log(2.0) / (0.001 * juce::jlimit(5.0f, 2000.0f, settings.oscBDecayMs) * sampleRate));
     if (!active)
         return;
     ampDecay = std::exp(-std::log(2.0) / (juce::jmax(0.01f, settings.decaySeconds) * sampleRate));
@@ -272,6 +290,11 @@ void BassVoice::noteOn(double frequencyHz, float newVelocity, const BassSettings
     phase = 0.0; // a zero crossing: no click
     phase2 = 0.25;
     phaseSub = 0.0;
+    oscBPhase = 0.0;
+    oscBEnvelope = 1.0;
+    oscBGain = oscBGainTarget;
+    oscBShape = juce::jlimit(0.0f, 1.0f, settings.oscBShape);
+    oscBSustain = juce::jlimit(0.0f, 1.0f, settings.oscBSustain);
     amp = 1.0;
     swellGap = settings.swellDb > 0.01f ? 1.0 - dbToGain(-settings.swellDb) : 0.0;
     swellState = 1.0;
@@ -372,10 +395,8 @@ void BassVoice::noteOff(int fadeSamples)
     fadeTotal = fadeRemaining = juce::jmax(1, fadeSamples);
 }
 
-double BassVoice::synthSample(double level) noexcept
+double BassVoice::classicOscillator(double dt) noexcept
 {
-    const double dt = noteHz() * std::exp2(punch / 12.0) / sampleRate;
-    punch *= punchDecay;
     const double shape = juce::jlimit(0.0f, 1.0f, settings.shape);
     double osc = 0.0;
     switch (settings.wave)
@@ -421,13 +442,52 @@ double BassVoice::synthSample(double level) noexcept
             osc = std::sin(2.0 * kPi * phase + 2.5 * shape * std::sin(2.0 * kPi * phase)); // FM 1:1: the growl
             break;
     }
+    return osc;
+}
+
+double BassVoice::synthSample(double level) noexcept
+{
+    const double seconds = static_cast<double>(elapsed) / sampleRate;
+    const bool sequence = drawTo.enabled && drawTo.wave != nullptr && drawTo.wave->duration() > 0.0;
+    const double ratio = sequence ? drawTo.wave->pitchRatio(seconds) : 1.0;
+    const double dt = noteHz() * std::exp2(punch / 12.0) * ratio / sampleRate;
+    punch *= punchDecay;
+    const bool fading = drawFadeRemaining > 0;
+    double osc = 0.0;
+    if (!drawTo.enabled || (fading && !drawFrom.enabled))
+        osc = classicOscillator(dt);
+    else
+        phase = wrap(phase + dt);
+    if (sequence && seconds < drawTo.wave->frames().front().time)
+        phase = 0.0;
+
+    if (drawTo.enabled || fading)
+    {
+        const auto read = [&](const DrawSource& source)
+        {
+            if (!source.enabled)
+                return osc;
+            return source.wave != nullptr ? source.wave->read(phase, dt, seconds) : 0.0;
+        };
+        const double target = read(drawTo);
+        if (fading)
+        {
+            const double from = read(drawFrom);
+            const double t = 1.0 - static_cast<double>(drawFadeRemaining) / drawFadeSamples;
+            osc = from + (target - from) * (t * t * (3.0 - 2.0 * t));
+            if (--drawFadeRemaining == 0)
+                drawFrom = {};
+        }
+        else
+            osc = target;
+    }
     if (settings.sub > 0.001f)
     {
         phaseSub = wrap(phaseSub + (settings.subOctave == 1 ? dt : 0.5 * dt));
         osc += settings.sub * std::sin(2.0 * kPi * phaseSub);
     }
 
-    const double x = level * (1.0 + boost) * osc;
+    const double x = (sequence ? 1.0 : level) * (1.0 + boost) * osc;
     boost *= boostDecay;
     const double drive = settings.drive;
     const double saturated = (std::tanh(drive * (x + settings.bias)) - tanhBias) / tanhDrive;
@@ -441,6 +501,39 @@ double BassVoice::synthSample(double level) noexcept
     dcIn = out;
     dcOut = dc;
     return dc * synthGain;
+}
+
+double BassVoice::oscBSample(double level) noexcept
+{
+    constexpr double nyquist = 0.5;
+    constexpr double fadeStart = 0.4;
+    constexpr std::array<double, 7> soft { 0.72, 0.28, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    constexpr std::array<double, 7> hard { 0.08, 0.32, 0.08, 0.24, 0.10, 0.10, 0.08 };
+
+    oscBGain += knobGlide * (oscBGainTarget - oscBGain);
+    oscBShape += knobGlide * (juce::jlimit(0.0f, 1.0f, settings.oscBShape) - oscBShape);
+    oscBSustain += knobGlide * (juce::jlimit(0.0f, 1.0f, settings.oscBSustain) - oscBSustain);
+    const double dt = noteHz() / sampleRate;
+    oscBPhase = wrap(oscBPhase + dt);
+    const double theta = 2.0 * kPi * oscBPhase;
+    const double twiceCosine = 2.0 * std::cos(theta);
+    double previous = 0.0;
+    double partial = std::sin(theta);
+    double sum = 0.0;
+    for (size_t i = 0; i < soft.size(); ++i)
+    {
+        const double frequency = static_cast<double>(i + 2) * dt;
+        if (frequency >= nyquist)
+            break;
+        const double next = twiceCosine * partial - previous;
+        previous = partial;
+        partial = next;
+        const double fade = std::min(1.0, (nyquist - frequency) / (nyquist - fadeStart));
+        const double weight = soft[i] + oscBShape * (hard[i] - soft[i]);
+        sum += weight * partial * (fade * fade * (3.0 - 2.0 * fade));
+    }
+
+    return sum * oscBGain * level * (oscBSustain + (1.0 - oscBSustain) * oscBEnvelope);
 }
 
 double BassVoice::clickSample() noexcept
@@ -558,6 +651,7 @@ double BassVoice::filterSample(double x, double lfo) noexcept
 void BassVoice::render(float* out, const float* lfo, int numSamples)
 {
     const double synthLevel = settings.synthLevelDb > -59.5f ? dbToGain(settings.synthLevelDb) : 0.0;
+    const bool oscBActive = oscBGainTarget > 0.0 || oscBGain > 1.0e-7;
     const double sampleLevel = sample != nullptr && settings.sampleLevelDb > -59.5f ? dbToGain(settings.sampleLevelDb) : 0.0;
     // a sustain turned while the note sounds (the lane's LENGTH) glides there in ~10 ms instead of jumping
     const double sustain = juce::jlimit(0.0f, 1.0f, settings.sustain);
@@ -579,6 +673,9 @@ void BassVoice::render(float* out, const float* lfo, int numSamples)
             updateNoteFilters(); // Tone Fall: its low-pass closes as the note goes on
         sustainNow += knobGlide * (sustain - sustainNow);
         const double level = sustainNow + (1.0 - sustainNow) * amp;
+        if (drawTo.enabled && drawTo.wave != nullptr && drawTo.wave->duration() > 0.0
+            && elapsed >= static_cast<std::int64_t>(drawTo.wave->duration() * sampleRate) && fadeTotal == 0)
+            noteOff(std::max(1, static_cast<int>(0.005 * sampleRate)));
         if (elapsed >= holdSamples)
             amp *= ampDecay;
 
@@ -590,7 +687,7 @@ void BassVoice::render(float* out, const float* lfo, int numSamples)
             toSample = std::cos(0.5 * kPi * x); // equal power
             toSynth = std::sin(0.5 * kPi * x);
         }
-        if (synthLevel <= 0.0 && sample != nullptr && !settings.sampleLoop)
+        if (synthLevel <= 0.0 && !oscBActive && sample != nullptr && !settings.sampleLoop)
         {
             // only the sample sounds and it has played out: the note is over (a slide after it starts anew)
             const bool granular = settings.sampleLockTime || std::abs(settings.sampleStretch - 1.0f) >= 0.001f;
@@ -600,7 +697,10 @@ void BassVoice::render(float* out, const float* lfo, int numSamples)
                 break;
             }
         }
-        const double synth = synthLevel > 0.0 ? synthSample(level) * synthLevel : 0.0;
+        double synth = synthLevel > 0.0 ? synthSample(level) * synthLevel : 0.0;
+        if (oscBActive)
+            synth += oscBSample(level);
+        oscBEnvelope = oscBEnvelope > 1.0e-8 ? oscBEnvelope * oscBDecay : 0.0;
         const double played = sampleLevel > 0.0 ? sampleSample() * level * sampleLevel : 0.0;
         double mix = toSynth * synth + toSample * played;
         if (swellGap > 0.0)

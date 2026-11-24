@@ -2,6 +2,7 @@
 
 #include "Bass808/BassExport.h"
 #include "Bass808/BassSettingsIO.h"
+#include "BassPresetBrowser.h"
 
 #include "UI/SketchTheme.h"
 
@@ -12,8 +13,8 @@ namespace
 using namespace b808;
 using Item = Page::Item;
 
-constexpr int kWidth = 1000, kHeight = 650;
-constexpr int kHeaderHeight = 64, kTabTop = 70, kTabHeight = 28, kScreenTop = 104, kScreenHeight = 262, kPageTop = 378;
+constexpr int kWidth = Bass808Editor::defaultWidth, kHeight = Bass808Editor::defaultHeight;
+constexpr int kHeaderHeight = 64, kTabTop = 70, kTabHeight = 28, kScreenTop = 104, kScreenHeight = 262, kPageTop = 410;
 
 bool isAudioFile(const juce::String& path)
 {
@@ -21,11 +22,159 @@ bool isAudioFile(const juce::String& path)
 }
 } // namespace
 
+// One quiet strip above the controls, with independent selections for all five modules.
+class Bass808Editor::SectionStrip final : public juce::Component
+{
+public:
+    explicit SectionStrip(Bass808Processor& processor) : bass(processor)
+    {
+        box.setName("Module preset");
+        box.setTextWhenNothingSelected("Current settings");
+        box.onChange = [this]
+        {
+            const int index = box.getSelectedId() - 1;
+            const auto& factory = bassSectionPresets(section);
+            if (juce::isPositiveAndBelow(index, static_cast<int>(factory.size())))
+                bass.applySectionPreset(section, factory[static_cast<size_t>(index)].settings);
+            else
+            {
+                const int user = index - static_cast<int>(factory.size());
+                if (!juce::isPositiveAndBelow(user, files.size())) return;
+                const auto preset = readBassPreset(files[user]);
+                if (!preset) { box.setText("Could not read preset", juce::dontSendNotification); return; }
+                bass.applySectionPreset(section, preset->settings);
+            }
+            remember(box.getText());
+        };
+        save.onClick = [this]
+        {
+            if (!naming)
+            {
+                naming = true;
+                const auto label = labels[static_cast<size_t>(section)];
+                name.setText(label.startsWith("User / ") ? label.substring(7)
+                             : (label.isNotEmpty() ? label : "My " + juce::String(bassSectionName(section))), false);
+                name.setBounds(box.getBounds()); box.setVisible(false); name.setVisible(true); save.setButtonText("OK");
+                if (getPeer() != nullptr) { name.grabKeyboardFocus(); name.selectAll(); }
+                return;
+            }
+            saveCurrent();
+        };
+        reset.onClick = [this]
+        {
+            endNaming();
+            bass.applySectionPreset(section, bassSectionPresets(section).front().settings);
+            remember(bassSectionPresets(section).front().name);
+            box.setSelectedId(1, juce::dontSendNotification);
+        };
+        reset.setTooltip("Reset only this module to its first factory preset");
+        save.setTooltip("Save only this module's settings as a reusable preset");
+        name.setTextToShowWhenEmpty("Module preset name", b808::colour::textMuted);
+        name.onReturnKey = [this] { saveCurrent(); };
+        name.onEscapeKey = [this] { endNaming(); };
+        for (auto* component : std::array<juce::Component*, 3> { &box, &save, &reset }) addAndMakeVisible(component);
+        addChildComponent(name);
+        setSection(0);
+    }
+
+    void setSection(int index)
+    {
+        endNaming(); section = index;
+        refill(); repaint();
+    }
+    void clearSelections()
+    {
+        labels.fill({});
+        for (auto& snapshot : snapshots) snapshot.clear();
+        synthWave.reset();
+        box.setSelectedId(0, juce::dontSendNotification);
+        box.setText("Current settings", juce::dontSendNotification);
+    }
+    void sync()
+    {
+        const auto i = static_cast<size_t>(section);
+        if (labels[i].isEmpty() || naming) return;
+        if (snapshots[i] != values() || (section == 0 && synthWave != bass.getDrawWave()))
+        {
+            labels[i] = {}; snapshots[i].clear();
+            box.setSelectedId(0, juce::dontSendNotification);
+            box.setText("Custom settings", juce::dontSendNotification);
+        }
+    }
+    void paint(juce::Graphics& g) override
+    {
+        using namespace b808;
+        g.setColour(colour::textMuted);
+        g.setFont(juce::FontOptions(11, juce::Font::bold));
+        g.drawText(juce::String(bassSectionName(section)).toUpperCase() + " PRESET", 0, 0, 126, getHeight(), juce::Justification::centredLeft);
+        g.setFont(juce::FontOptions(11.5f));
+        g.drawText("Only this module", 566, 0, getWidth() - 566, getHeight(), juce::Justification::centredRight);
+    }
+    void resized() override
+    {
+        box.setBounds(130, 0, 270, getHeight()); name.setBounds(box.getBounds());
+        save.setBounds(408, 0, 68, getHeight()); reset.setBounds(484, 0, 68, getHeight());
+    }
+
+private:
+    juce::File folder() const { return bassUserPresetFolder().getChildFile("Modules").getChildFile(bassSectionName(section)); }
+    std::vector<float> values() const
+    {
+        std::vector<float> result;
+        for (const auto& id : bassSectionParameterIds(section))
+            if (auto* parameter = bass.apvts.getParameter(id)) result.push_back(parameter->getValue());
+        return result;
+    }
+    void remember(const juce::String& label)
+    {
+        labels[static_cast<size_t>(section)] = label;
+        snapshots[static_cast<size_t>(section)] = values();
+        if (section == 0) synthWave = bass.getDrawWave();
+    }
+    void refill()
+    {
+        box.clear(juce::dontSendNotification);
+        box.addSectionHeading("Factory / " + juce::String(bassSectionName(section)));
+        int id = 1;
+        for (const auto& preset : bassSectionPresets(section)) box.addItem(preset.name, id++);
+        files = folder().findChildFiles(juce::File::findFiles, false, "*.hpbass");
+        std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) { return a.getFileName().compareNatural(b.getFileName()) < 0; });
+        if (!files.isEmpty()) box.addSectionHeading("My module presets");
+        for (const auto& file : files) box.addItem("User / " + file.getFileNameWithoutExtension(), id++);
+        const auto label = labels[static_cast<size_t>(section)];
+        box.setText(label.isEmpty() ? "Current settings" : label, juce::dontSendNotification);
+    }
+    void endNaming()
+    {
+        naming = false; name.setVisible(false); box.setVisible(true); save.setButtonText("SAVE AS");
+    }
+    void saveCurrent()
+    {
+        const auto typed = juce::File::createLegalFileName(name.getText().trim());
+        if (typed.isEmpty()) { endNaming(); return; }
+        const auto file = folder().getNonexistentChildFile(typed, ".hpbass");
+        BassPresetFile preset;
+        preset.name = file.getFileNameWithoutExtension(); preset.settings = bass.currentSettings();
+        if (!writeBassPreset(file, preset)) { save.setButtonText("RETRY"); return; }
+        remember("User / " + preset.name); endNaming(); refill();
+    }
+    Bass808Processor& bass;
+    int section = 0;
+    bool naming = false;
+    juce::ComboBox box;
+    juce::TextButton save { "SAVE AS" }, reset { "RESET" };
+    juce::TextEditor name;
+    juce::Array<juce::File> files;
+    std::array<juce::String, 5> labels;
+    std::array<std::vector<float>, 5> snapshots;
+    std::shared_ptr<const BassDrawWave> synthWave;
+};
+
 // Holds a note while pressed: hear the sound without a MIDI keyboard (the last played note, C2 at first).
 class Bass808Editor::PlayButton final : public juce::TextButton, private juce::Timer
 {
 public:
-    explicit PlayButton(Bass808Processor& processor) : juce::TextButton("PLAY"), bass(processor)
+    PlayButton(Bass808Processor& processor, Bass808Screen& view) : juce::TextButton("PLAY"), bass(processor), screen(view)
     {
         setClickingTogglesState(true);
         setTooltip("Play/stop a repeating preview of the current sound");
@@ -33,6 +182,11 @@ public:
         {
             if (!getToggleState()) { stop(); return; }
             setButtonText("STOP");
+            if (screen.usesSynthTimeline())
+            {
+                screen.startPreview();
+                return;
+            }
             trigger();
             startTimer(650);
         };
@@ -41,6 +195,7 @@ public:
     void stop()
     {
         stopTimer();
+        screen.stopPreview();
         if (held) bass.keyboardState.noteOff(1, note, 0.0f);
         held = false;
         setToggleState(false, juce::dontSendNotification);
@@ -55,6 +210,7 @@ private:
         else { trigger(); startTimer(650); }
     }
     Bass808Processor& bass;
+    Bass808Screen& screen;
     int note = 36;
     bool held = false;
 };
@@ -107,26 +263,13 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
 #endif
     setLookAndFeel(&look);
 
-    fillPresetBox();
-    presetBox.onChange = [this]
-    {
-        const int id = presetBox.getSelectedId();
-        if (id >= kUserPresetId && id - kUserPresetId < userPresets.size())
-        {
-            if (const auto preset = readBassPreset(userPresets[id - kUserPresetId]))
-                bass.applyUserPreset(*preset);
-        }
-        else if (id > 0)
-        {
-            bass.applyPreset(id - 1);
-        }
-        shownPreset = bass.getCurrentProgram();
-    };
+    presetButton.setName("Browse presets");
+    presetButton.onClick = [this] { endNaming(); presetBrowser->open(); };
     previousPreset.onClick = [this] { stepPreset(-1); };
     nextPreset.onClick = [this] { stepPreset(1); };
     saveButton.setTooltip("Save this sound as a preset (Documents/HamloProd/Bass808 Presets, shared with HPDG)");
     saveButton.onClick = [this] { savePreset(); };
-    addAndMakeVisible(presetBox);
+    addAndMakeVisible(presetButton);
     addAndMakeVisible(previousPreset);
     addAndMakeVisible(nextPreset);
     addAndMakeVisible(saveButton);
@@ -137,7 +280,7 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
 
     mode = std::make_unique<ParamCombo>(bass.apvts, "mode", "Mode");
     addAndMakeVisible(*mode);
-    play = std::make_unique<PlayButton>(bass);
+    play = std::make_unique<PlayButton>(bass, screen);
     addAndMakeVisible(*play);
     exportButton.setTooltip("Save the finished bass sample (the last played note, with the master) as a WAV");
     exportButton.onClick = [this] { exportWav(); };
@@ -160,6 +303,15 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
         addAndMakeVisible(tabs[i]);
     }
     addAndMakeVisible(screen);
+    screen.onLoadReference = [this] { chooseReference(); };
+    screen.onNewPreset = [this]
+    {
+        endNaming();
+        stopAudition();
+        bass.newDrawPreset();
+        updatePresetName();
+        sectionStrip->clearSelections();
+    };
 
     auto& state = bass.apvts;
     pages[0] = std::make_unique<Page>(state, std::vector<Page::Group> {
@@ -182,9 +334,12 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
         { "PLAYBACK", 2, { { Item::Toggle, "smpLoop", "LOOP" }, { Item::Toggle, "smpFollow", "FOLLOW KEY" }, { Item::Toggle, "smpLock", "LOCK TIME" },
                            { Item::Toggle, "smpReverse", "REVERSE" }, { Item::Toggle, "smpInvert", "INVERT" } } },
     });
+    constexpr auto synthLevelLabel = "OSC A";
     pages[2] = std::make_unique<Page>(state, std::vector<Page::Group> {
-        { "LAYERS", 2, { { Item::Knob, "synthLevel", "Synth" }, { Item::Knob, "smpLevel", "Sample" }, { Item::Knob, "handoff", "Handoff" },
+        { "LAYERS", 2, { { Item::Knob, "synthLevel", synthLevelLabel }, { Item::Knob, "smpLevel", "Sample" }, { Item::Knob, "handoff", "Handoff" },
                          { Item::Toggle, "smpInvert", "INVERT" } } },
+        { "OSC B", 2, { { Item::Knob, "oscBLevel", "Level" }, { Item::Knob, "oscBShape", "Shape" },
+                        { Item::Knob, "oscBDecay", "Decay" }, { Item::Knob, "oscBSustain", "Sustain" } } },
         { "WEIGHT", 2, { { Item::Knob, "sub", "Sub" }, { Item::Knob, "phantom", "Phantom" } } },
         { "ENVELOPE", 2, { { Item::Knob, "attack", "Attack" }, { Item::Knob, "swell", "Swell" }, { Item::Knob, "swellTime", "Swell Time" },
                            { Item::Knob, "hold", "Hold" }, { Item::Knob, "decay", "Decay" },
@@ -211,6 +366,13 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
     for (auto& page : pages)
         addChildComponent(*page);
 
+    sectionStrip = std::make_unique<SectionStrip>(bass);
+    addAndMakeVisible(*sectionStrip);
+    presetBrowser = std::make_unique<BassPresetBrowser>(bass);
+    presetBrowser->onLoaded = [this] { updatePresetName(); sectionStrip->clearSelections(); };
+    addChildComponent(*presetBrowser);
+    updatePresetName();
+
     tabs[0].setToggleState(true, juce::dontSendNotification);
     selectTab(0);
     setSize(kWidth, kHeight);
@@ -219,6 +381,7 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
 
 Bass808Editor::~Bass808Editor()
 {
+    play.reset(); // PlayButton stops the screen's transport before the screen is destroyed.
     setLookAndFeel(nullptr);
 }
 
@@ -231,31 +394,20 @@ void Bass808Editor::showTab(int index)
 
 void Bass808Editor::selectTab(int index)
 {
+    const bool changedPreview = bass.apvts.getParameter("oscADraw") != nullptr
+        && screen.usesSynthTimeline() != (index == Bass808Screen::Synth);
+    if (changedPreview)
+        stopAudition();
     for (size_t i = 0; i < pages.size(); ++i)
         pages[i]->setVisible(static_cast<int>(i) == index);
     screen.setMode(static_cast<Bass808Screen::Mode>(index));
+    if (sectionStrip != nullptr) sectionStrip->setSection(index);
 }
 
-void Bass808Editor::fillPresetBox()
+void Bass808Editor::updatePresetName()
 {
-    // factory presets grouped by genre, then the user's own (the shared preset folder)
-    presetBox.clear(juce::dontSendNotification);
-    const auto& presets = bassPresets();
-    juce::String genre;
-    for (size_t i = 0; i < presets.size(); ++i)
-    {
-        if (genre != presets[i].genre)
-        {
-            genre = presets[i].genre;
-            presetBox.addSectionHeading(genre);
-        }
-        presetBox.addItem(juce::String(presets[i].genre) + "  " + presets[i].name, static_cast<int>(i) + 1);
-    }
-    userPresets = bassUserPresetFiles();
-    if (!userPresets.isEmpty())
-        presetBox.addSectionHeading("User");
-    for (int i = 0; i < userPresets.size(); ++i)
-        presetBox.addItem("User  " + userPresets[i].getFileNameWithoutExtension(), kUserPresetId + i);
+    presetButton.setButtonText(bass.presetName() + "  ...");
+    presetButton.setTooltip(bass.presetName() + " — browse, search and filter presets");
 }
 
 void Bass808Editor::savePreset()
@@ -266,8 +418,8 @@ void Bass808Editor::savePreset()
     {
         naming = true;
         nameEditor.setText(bass.presetName(), juce::dontSendNotification);
-        nameEditor.setBounds(presetBox.getBounds());
-        presetBox.setVisible(false);
+        nameEditor.setBounds(presetButton.getBounds());
+        presetButton.setVisible(false);
         nameEditor.setVisible(true);
         saveButton.setButtonText("OK");
         nameEditor.grabKeyboardFocus();
@@ -281,7 +433,7 @@ void Bass808Editor::endNaming()
 {
     naming = false;
     nameEditor.setVisible(false);
-    presetBox.setVisible(true);
+    presetButton.setVisible(true);
     saveButton.setButtonText("SAVE");
 }
 
@@ -300,10 +452,8 @@ void Bass808Editor::writePreset(const juce::String& typed)
     if (writeBassPreset(file, preset))
     {
         bass.setUserPresetName(name);
-        fillPresetBox();
-        const int index = userPresets.indexOf(file);
-        if (index >= 0)
-            presetBox.setSelectedId(kUserPresetId + index, juce::dontSendNotification);
+        presetBrowser->refresh();
+        updatePresetName();
         message = "Saved: " + name;
     }
     else
@@ -358,23 +508,17 @@ void Bass808Editor::exportWav()
 
 void Bass808Editor::stepPreset(int delta)
 {
-    const int count = bass.getNumPrograms();
-    bass.applyPreset((bass.getCurrentProgram() + delta + count) % count);
+    presetBrowser->step(delta);
 }
 
 void Bass808Editor::timerCallback()
 {
-    if (bass.isUserPreset())
+    if (presetButton.getButtonText() != bass.presetName() + "  ...")
     {
-        // a user preset, a lane's own sound: its name (the list entry when it is one of the user files)
-        if (presetBox.getSelectedId() < kUserPresetId && presetBox.getText() != bass.presetName())
-            presetBox.setText(bass.presetName(), juce::dontSendNotification);
+        updatePresetName();
+        sectionStrip->clearSelections();
     }
-    else if (bass.getCurrentProgram() != shownPreset || presetBox.getSelectedId() != shownPreset + 1)
-    {
-        shownPreset = bass.getCurrentProgram();
-        presetBox.setSelectedId(shownPreset + 1, juce::dontSendNotification);
-    }
+    sectionStrip->sync();
     if (messageTicks > 0 && --messageTicks == 0)
         repaint();
 }
@@ -407,6 +551,26 @@ void Bass808Editor::loadSample(const juce::File& file)
     repaint();
 }
 
+void Bass808Editor::chooseReference()
+{
+    chooser = std::make_unique<juce::FileChooser>("Load a waveform reference", juce::File(), "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.ogg");
+    juce::Component::SafePointer<Bass808Editor> editor(this);
+    chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                         [editor](const juce::FileChooser& fc)
+                         {
+                             if (editor != nullptr && fc.getResult().existsAsFile())
+                                 editor->loadReference(fc.getResult());
+                         });
+}
+
+void Bass808Editor::loadReference(const juce::File& file)
+{
+    message = screen.loadReference(file) ? "Reference loaded: " + file.getFileName()
+                                         : "Could not read reference: " + file.getFileName();
+    messageTicks = 40;
+    repaint();
+}
+
 bool Bass808Editor::isInterestedInFileDrag(const juce::StringArray& files)
 {
     return files.size() == 1 && isAudioFile(files[0]);
@@ -424,11 +588,16 @@ void Bass808Editor::fileDragExit(const juce::StringArray&)
     repaint();
 }
 
-void Bass808Editor::filesDropped(const juce::StringArray& files, int, int)
+void Bass808Editor::filesDropped(const juce::StringArray& files, int x, int y)
 {
     dragOver = false;
     if (!files.isEmpty())
-        loadSample(juce::File(files[0]));
+    {
+        if (screen.usesSynthTimeline() && screen.getBounds().contains(x, y))
+            loadReference(juce::File(files[0]));
+        else
+            loadSample(juce::File(files[0]));
+    }
 }
 
 void Bass808Editor::paint(juce::Graphics& g)
@@ -473,7 +642,7 @@ void Bass808Editor::paintOverChildren(juce::Graphics& g)
 
 void Bass808Editor::resized()
 {
-    presetBox.setBounds(196, 24, 206, 28);
+    presetButton.setBounds(196, 24, 206, 28);
     previousPreset.setBounds(406, 24, 26, 28);
     nextPreset.setBounds(434, 24, 26, 28);
     saveButton.setBounds(464, 24, 50, 28);
@@ -490,7 +659,9 @@ void Bass808Editor::resized()
     dragButton->setBounds(kWidth - 12 - 70, kTabTop, 70, kTabHeight);
     exportButton.setBounds(kWidth - 12 - 70 - 6 - 104, kTabTop, 104, kTabHeight);
     screen.setBounds(12, kScreenTop, kWidth - 24, kScreenHeight);
+    sectionStrip->setBounds(12, 374, kWidth - 24, 28);
     for (auto& page : pages)
         page->setBounds(12, kPageTop, kWidth - 24, kHeight - kPageTop - 8);
+    presetBrowser->setBounds(getLocalBounds());
 }
 } // namespace bbg

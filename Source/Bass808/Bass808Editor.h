@@ -12,12 +12,14 @@
 
 namespace bbg
 {
+class BassPresetBrowser;
 // HPDG 808's window, in HPDG's Dark skin: preset / mode / play keys on top, the tabs (SYNTH, SAMPLE,
 // MIX, FILTER · FX and, in the plugin, MASTER) that switch the screen and the controls under it. Drop an audio file anywhere on the
 // window to load it into the sample layer.
 class Bass808Editor : public juce::AudioProcessorEditor, public juce::FileDragAndDropTarget, private juce::Timer
 {
 public:
+    static constexpr int defaultWidth = 1000, defaultHeight = 682;
     explicit Bass808Editor(Bass808Processor& processor);
     ~Bass808Editor() override;
 
@@ -37,13 +39,16 @@ public:
 private:
     class PlayButton;
     class DragButton;
+    class SectionStrip;
 
     void timerCallback() override;
     void selectTab(int index);
     void stepPreset(int delta);
     void chooseSample();
     void loadSample(const juce::File& file);
-    void fillPresetBox();
+    void chooseReference();
+    void loadReference(const juce::File& file);
+    void updatePresetName();
     void savePreset();
     void writePreset(const juce::String& name);
     void endNaming();
@@ -53,12 +58,10 @@ private:
 
     Bass808Processor& bass;
     b808::Look look;
-    juce::ComboBox presetBox;
+    juce::TextButton presetButton;
     juce::TextButton previousPreset { "<" }, nextPreset { ">" }, saveButton { "SAVE" };
-    juce::Array<juce::File> userPresets;
     juce::TextEditor nameEditor;
     bool naming = false;
-    static constexpr int kUserPresetId = 1001;
     std::unique_ptr<b808::ParamCombo> mode;
     std::unique_ptr<PlayButton> play;
     juce::TextButton exportButton { "EXPORT WAV" };
@@ -68,10 +71,11 @@ private:
     int tabCount = 5; // HPDG's Sub808 lane plays the master too (stereo since 2026-11-16)
     Bass808Screen screen;
     std::array<std::unique_ptr<b808::Page>, 5> pages;
+    std::unique_ptr<SectionStrip> sectionStrip;
+    std::unique_ptr<BassPresetBrowser> presetBrowser;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String message;
     int messageTicks = 0;
     bool dragOver = false;
-    int shownPreset = -1;
 };
 } // namespace bbg

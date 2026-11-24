@@ -1,11 +1,36 @@
-HPDG 808 1.0.2
+HPDG 808 1.1.0
 HamloProd bass instrument - Windows 10/11 x64 - VST3 and Standalone
 
 HPDG 808 is the 808 and bass engine from HPDG, now as its own instrument.
 Play it from any MIDI keyboard or piano roll, shape the sound, and drag the
 finished bass one-shot straight into your DAW.
 
-WHAT IS NEW IN 1.0.2
+WHAT IS NEW IN 1.1.0
+- Sound Library: click the preset name to search 212 sounds by name, genre,
+  category and character, filter by genre, mark favorites with a star, and
+  find your own saved sounds under My presets. < > steps through the
+  filtered list.
+- Section presets: every tab has its own preset menu that loads only that
+  part of the sound (synth, sample, mix, filter / FX or master) and keeps
+  the rest. 35 section presets included; SAVE AS stores your own, RESET
+  goes back to the loaded preset.
+- OSC B (MIX tab): harmonics 2 to 8 over the played note, with Level,
+  Shape, Decay and Sustain. The 808 line stays readable on phones and
+  laptops; the sub stays the same.
+- Draw Wave (SYNTH tab): draw your own oscillator cycle with the mouse,
+  zoom into it up to 32x, undo and clear. Saved with presets and projects.
+- LOAD REF + AUTO DRAW: load an 808 recording (up to 10 s) as a guide.
+  FULL rebuilds the whole recording as editable wave frames with its own
+  pitch drop, tone changes and length, playable on any key; CYCLE takes
+  one cycle from the part you select.
+- SYNTH preview: PLAY repeats the last note from a cursor, click or drag
+  the waveform to hear any moment, with a beat grid from the DAW tempo or
+  your own BPM and Snap.
+- 12 new Trap / Drill voicings made for OSC B: Clean, Punch, Grit and
+  Slide, three of each.
+- Projects and presets from 1.0 open and sound exactly as before.
+
+1.0.2
 - The 200 factory presets made again from a full fitting run over 1309 real
   808 recordings: each preset now sounds closer to the 808 it was made from
   (the median difference 22-33 % smaller in Boom Bap, Trap, Rap, Drum & Bass
@@ -16,8 +41,9 @@ WHAT IS NEW IN 1.0.2
   and Release knobs are no longer cut off.
 
 WHAT IS INSIDE
-- 200 factory presets by genre and substyle: Boom Bap, Trap, Rap, Drill,
-  Drum & Bass, Techno, Atmospheric and four utility subs.
+- 212 factory presets by genre and substyle: Boom Bap, Trap, Rap, Drill,
+  Drum & Bass, Techno, Atmospheric, four utility subs and 12 Trap / Drill
+  voicings; 35 section presets.
 - An 808 synth: Sine, Triangle, Saw, Square and Reese waves, a sub oscillator,
   Punch (the pitch drop of an 808) up to 48 semitones, Drive / Even / Saturation,
   a key-tracked Tone, Tone Fall, Click and Boost.
@@ -45,5 +71,6 @@ VST3:        C:\Program Files\Common Files\VST3\HPDG 808.vst3
 Standalone:  C:\Program Files\HamloProd\HPDG 808\HPDG 808.exe
 Guide:       Start menu -> HamloProd -> HPDG 808 Guide
 
-HPDG users: the same engine, presets and MASTER are inside HPDG's Sub808 lane.
+HPDG users: the same engine, presets and MASTER are inside HPDG's Sub808 lane,
+and from HPDG 0.1.0 Beta 9 the lane's editor has everything new in 1.1.0.
 Your own presets (Save) are shared by both, in Documents\HamloProd\Bass808 Presets.

@@ -13,6 +13,8 @@ namespace bbg
 // Sub808 lane and what a preset file holds. A missing property keeps the default, so older files load.
 juce::ValueTree bassSettingsToTree(const BassSettings&);
 BassSettings bassSettingsFromTree(const juce::ValueTree&);
+void writeDrawWave(juce::ValueTree&, const std::shared_ptr<const BassDrawWave>&);
+std::shared_ptr<const BassDrawWave> readDrawWave(const juce::ValueTree&);
 
 // A preset file (.hpbass, shared by HPDG and the HPDG 808 plugin): the settings and, when the sample layer
 // has one, the sample as a WAV inside.

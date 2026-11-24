@@ -3,6 +3,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 
 #include "Bass808/BassEngine.h"
+#include "Bass808/BassDrawWave.h"
 #include "Bass808/BassMaster.h"
 
 namespace bbg
@@ -20,7 +21,8 @@ juce::AudioBuffer<float> BassExport::render(const BassSettings& settings, std::s
     master.prepare(sampleRate);
 
     const int total = static_cast<int>(kMaxSeconds * sampleRate);
-    const int releaseAt = settings.sustain > 0.001f ? static_cast<int>(kHeldSeconds * sampleRate) : -1;
+    const bool sequence = settings.drawWaveEnabled && settings.drawnWave != nullptr && settings.drawnWave->duration() > 0.0;
+    const int releaseAt = !sequence && settings.sustain > 0.001f ? static_cast<int>(kHeldSeconds * sampleRate) : -1;
     const int tailAfterEnd = static_cast<int>(0.3 * sampleRate); // the master's width and harmonics ring a little
     juce::AudioBuffer<float> out(2, total);
     out.clear();

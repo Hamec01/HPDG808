@@ -1,9 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <juce_core/juce_core.h>
 
 namespace bbg
 {
+class BassDrawWave;
+
 // Every control of HPDG 808's sound (the engine in BassEngine.h). Plain data: HPDG's Sub808 lane keeps one,
 // the plugin builds one from its parameters, BassSettingsIO.h reads and writes it.
 struct BassSettings
@@ -11,9 +14,12 @@ struct BassSettings
     enum Wave { Sine = 0, Triangle, Saw, Square, Reese, NumWaves };
     enum FilterType { LP12 = 0, LP24, HP12, BP, Vowel, NumFilters };
     enum PlayMode { Retrigger = 0, Legato, Glide };
+    static constexpr float kOscBOffDb = -60.0f;
 
     // synth layer
     int wave = Sine;
+    bool drawWaveEnabled = false;
+    std::shared_ptr<const BassDrawWave> drawnWave;
     float shape = 0.0f;           // Sine: FM depth; Triangle: skew; Saw: second saw detune; Square: pulse width; Reese: detune
     float sub = 0.0f;             // a sine under the oscillator
     int subOctave = 0;            // 0: one octave down, 1: at the note (under a Reese / saw, where -1 octave is below hearing)
@@ -29,6 +35,12 @@ struct BassSettings
                                   // string, whose losses rise with frequency (docs/audit/BASS808_FIT.md)
     float clickDb = -30.0f;       // <= -60: off
     float boostDb = 0.0f;
+
+    // OSC B follows the played pitch and adds only harmonics above the fundamental.
+    float oscBLevelDb = kOscBOffDb;
+    float oscBShape = 0.0f;
+    float oscBDecayMs = 180.0f;   // time for the transient harmonics to fall by 6 dB
+    float oscBSustain = 0.0f;     // harmonic level remaining relative to the voice envelope
 
     // envelope
     float attackMs = 2.0f;
