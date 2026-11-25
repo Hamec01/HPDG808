@@ -75,6 +75,7 @@ if (BUILD_TESTING)
         Tests/Bass808Snapshot.cpp
         Tests/Bass808OscBLab.cpp
         Tests/Bass808PresetsLab.cpp
+        Tests/Bass808MemphisLab.cpp
     )
     target_include_directories(HPDG_Bass808Snapshot PRIVATE Source)
     target_link_libraries(HPDG_Bass808Snapshot
@@ -91,7 +92,8 @@ if (BUILD_TESTING)
         --auto-grid-check "${CMAKE_BINARY_DIR}/checks/auto-grid")
     add_test(NAME HPDG808_OscB COMMAND HPDG_Bass808Snapshot
         --osc-b "${CMAKE_BINARY_DIR}/checks/osc-b")
-    set_tests_properties(HPDG808_PresetBrowser HPDG808_DrawWave HPDG808_SynthTimeline
+    add_test(NAME HPDG808_Memphis COMMAND HPDG_Bass808Snapshot --memphis-check)
+    set_tests_properties(HPDG808_Memphis HPDG808_PresetBrowser HPDG808_DrawWave HPDG808_SynthTimeline
         HPDG808_AutoGrid HPDG808_OscB PROPERTIES TIMEOUT 240)
 endif()
 

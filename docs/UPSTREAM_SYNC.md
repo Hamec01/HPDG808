@@ -8,6 +8,10 @@ All files in `Source/Bass808/`, except HPDG's lane adapter `Sub808Sound.*`, and
 OSC B, Draw Wave, reference resynthesis, preview transport, Sound Library and module presets.
 The browser, oscillator and editor checks in `Tests/` come from the same revision.
 
+Ahead of that revision (2026-11-25): the preset bank has the six `Memphis Trap - M808` presets instead of the eight
+fitted Memphis ones (`BassRetiredPresets.inc`), the same as HPDG's working copy. `Tests/Bass808MemphisLab.cpp` checks
+them (`--memphis-check`).
+
 This standalone repository keeps its own CMake project, installer and minimal drawing helpers.
 HPDG's drum sequencer, lane adapter and experimental skins are outside this product's scope.
 The standalone Dark controls use the existing `Source/UI/` helpers without adding HPDG's

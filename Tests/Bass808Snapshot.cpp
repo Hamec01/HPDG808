@@ -14,6 +14,7 @@
 using namespace bbg;
 
 int runBass808OscBLab(const juce::File& out);
+int runBass808MemphisLab();
 int runBass808PresetsLab(const juce::File& out);
 
 namespace
@@ -276,7 +277,7 @@ int checkDrawWave(const juce::File& out)
     if (out.createDirectory().failed())
         return 1;
     Bass808Processor bass;
-    bass.applyPreset(210); // OSC B and drive engaged before the reset
+    bass.applyPreset(208); // OSC B and drive engaged before the reset
     juce::MemoryBlock stockState;
     bass.getStateInformation(stockState);
     auto stockTree = juce::ValueTree::fromXml(*juce::AudioProcessor::getXmlFromBinary(stockState.getData(), static_cast<int>(stockState.getSize())));
@@ -338,7 +339,7 @@ int checkDrawWave(const juce::File& out)
     const bool presetOk = stroke && read && read->settings.drawWaveEnabled && read->settings.drawnWave != nullptr
         && read->settings.drawnWave->points() == drawn.drawnWave->points();
     bass.setStateInformation(stockState.getData(), static_cast<int>(stockState.getSize()));
-    const bool legacy = !bass.currentSettings().drawWaveEnabled && bass.getDrawWave() == nullptr && bass.getCurrentProgram() == 210;
+    const bool legacy = !bass.currentSettings().drawWaveEnabled && bass.getDrawWave() == nullptr && bass.getCurrentProgram() == 208;
 
     Points partial {};
     for (size_t i = 0; i < partial.size(); ++i)
@@ -560,6 +561,8 @@ int main(int argc, char* argv[])
         return checkFullReference(juce::File(juce::String(argv[2])), juce::File(juce::String(argv[3])));
     if (argc == 3 && juce::String(argv[1]) == "--auto-grid-check")
         return checkAutoGrid(juce::File(juce::String(argv[2])));
+    if (argc == 2 && juce::String(argv[1]) == "--memphis-check")
+        return runBass808MemphisLab();
     if (argc == 3 && juce::String(argv[1]) == "--osc-b")
         return runBass808OscBLab(juce::File(juce::String(argv[2])));
     if (argc == 3 && juce::String(argv[1]) == "--draw-check")

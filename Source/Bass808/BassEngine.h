@@ -36,8 +36,10 @@ struct BassPreset
     BassSettings settings;
 };
 
-// 200 factory sounds by genre and substyle (tools/bass_presets.py; Source/Bass808/BassFactoryPresets.inc).
+// 198 factory sounds by genre and substyle (tools/bass_presets.py; Source/Bass808/BassFactoryPresets.inc).
 const std::vector<BassPreset>& bassPresets();
+// Removed factory sounds (BassRetiredPresets.inc): only to recognise unedited copies in saved projects.
+const std::vector<BassPreset>& retiredBassPresets();
 // Pure synth fits to the owner's LuxuryTrap one-shots; 0 Spinz, 1 Lex.
 BassSettings luxuryBassSettings(int variant = 0);
 

@@ -1,7 +1,7 @@
 ﻿# HPDG 808
 
 The HPDG bass engine as its own instrument: an 808 synth, a sample layer, a saturator, a bass mastering
-section and 212 factory presets. VST3 and Standalone, Windows 10/11 x64. By HamloProd.
+section and 210 factory presets. VST3 and Standalone, Windows 10/11 x64. By HamloProd.
 
 Download: https://hamloprod.org/en/vst/hpdg808, or `dist/HPDG808_Setup_1.1.0.exe` in this repository
 (SHA-256 in `dist/HPDG808_Setup_1.1.0.exe.sha256`).

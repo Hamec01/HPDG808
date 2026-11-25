@@ -82,29 +82,45 @@ BassSettings luxuryBassSettings(int variant)
     return s;
 }
 
+namespace
+{
+struct PresetRow { const char* genre; const char* name; const char* settings; };
+
+template <size_t N>
+std::vector<BassPreset> readPresets(const PresetRow (&rows)[N])
+{
+    std::vector<BassPreset> list;
+    list.reserve(N);
+    for (const auto& row : rows)
+    {
+        juce::ValueTree tree("BassSettings");
+        for (const auto& pair : juce::StringArray::fromTokens(row.settings, " ", ""))
+            tree.setProperty(juce::Identifier(pair.upToFirstOccurrenceOf("=", false, false)),
+                             pair.fromFirstOccurrenceOf("=", false, false).getDoubleValue(), nullptr);
+        list.push_back({ row.genre, row.name, bassSettingsFromTree(tree) });
+    }
+    return list;
+}
+} // namespace
+
 const std::vector<BassPreset>& bassPresets()
 {
-    // 200 sounds: the sound-matching fits to 1180 bass one-shots placed by genre and substyle, finished with the
-    // master and levelled (tools/bass_presets.py, docs/audit/BASS808_FIT.md), the owner's two LuxuryTrap fits
-    // and four utility subs. The table is generated: change the script, not the .inc.
-    struct Row { const char* genre; const char* name; const char* settings; };
-    static constexpr Row rows[] {
+    // 198 sounds: the sound-matching fits to 1180 bass one-shots placed by genre and substyle, finished with the
+    // master and levelled (tools/bass_presets.py, docs/audit/BASS808_FIT.md), the six MemphisTrap M808s, the owner's
+    // two LuxuryTrap fits and four utility subs. The table is generated: change the script, not the .inc.
+    static constexpr PresetRow rows[] {
 #include "BassFactoryPresets.inc"
     };
-    static const std::vector<BassPreset> table = []
-    {
-        std::vector<BassPreset> list;
-        list.reserve(std::size(rows));
-        for (const auto& row : rows)
-        {
-            juce::ValueTree tree("BassSettings");
-            for (const auto& pair : juce::StringArray::fromTokens(row.settings, " ", ""))
-                tree.setProperty(juce::Identifier(pair.upToFirstOccurrenceOf("=", false, false)),
-                                 pair.fromFirstOccurrenceOf("=", false, false).getDoubleValue(), nullptr);
-            list.push_back({ row.genre, row.name, bassSettingsFromTree(tree) });
-        }
-        return list;
-    }();
+    static const auto table = readPresets(rows);
+    return table;
+}
+
+const std::vector<BassPreset>& retiredBassPresets()
+{
+    static constexpr PresetRow rows[] {
+#include "BassRetiredPresets.inc"
+    };
+    static const auto table = readPresets(rows);
     return table;
 }
 
