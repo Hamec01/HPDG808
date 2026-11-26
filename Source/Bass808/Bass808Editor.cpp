@@ -285,6 +285,12 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
     exportButton.setTooltip("Save the finished bass sample (the last played note, with the master) as a WAV");
     exportButton.onClick = [this] { exportWav(); };
     addAndMakeVisible(exportButton);
+#if !HPDG_BASS808_EMBEDDED // HPDG plays its bass lanes itself
+    trioButton.setTooltip("Trio: MIDI channel 1 plays this sound, channel 2 a Mid and channel 3 a Stab preset "
+                          "(HPDG's DnB Dancefloor exports its Sub / Mid Bass A / Mid Bass B lanes on channels 1-3)");
+    trioButton.onClick = [this] { showTrioMenu(); };
+    addAndMakeVisible(trioButton);
+#endif
     dragButton = std::make_unique<DragButton>(*this);
     addAndMakeVisible(*dragButton);
     for (const auto& [id, text] : { std::pair { "glide", "Glide" }, { "velocity", "Velocity" }, { "tune", "Tune" }, { "gain", "Gain" } })
@@ -353,6 +359,8 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
                       { Item::Toggle, "lfoRetrig", "RETRIG" } } },
         { "HAMLOMAG SATURATOR", 2, { { Item::Combo, "satModel", "Model" }, { Item::Knob, "satDrive", "Drive" }, { Item::Knob, "satHarm", "Harmonics" },
                                      { Item::Knob, "satEvenOdd", "Even/Odd" }, { Item::Knob, "satMix", "Mix" }, { Item::Knob, "phantom", "Phantom" } } },
+        // after the saturator: keeps a mid bass out of a separate sub's band (DnB Dancefloor's Mid / Stab presets: 110 Hz)
+        { "LOW CUT", 1, { { Item::Knob, "lowCut", "Low Cut" } } },
     });
     // the master (BassMaster): the bass made ready for a mix, mono sub and stereo above it
     pages[4] = std::make_unique<Page>(state, std::vector<Page::Group> {
@@ -511,8 +519,53 @@ void Bass808Editor::stepPreset(int delta)
     presetBrowser->step(delta);
 }
 
+juce::String Bass808Editor::trioText() const
+{
+    const bool on = bass.apvts.getRawParameterValue("trio")->load() >= 0.5f;
+    return on ? "TRIO ON" : "TRIO";
+}
+
+void Bass808Editor::showTrioMenu()
+{
+    const auto set = [this](const char* id, float value)
+    {
+        if (auto* parameter = bass.apvts.getParameter(id))
+        {
+            parameter->beginChangeGesture();
+            parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+            parameter->endChangeGesture();
+        }
+    };
+    const bool on = bass.apvts.getRawParameterValue("trio")->load() >= 0.5f;
+    juce::PopupMenu menu;
+    menu.addItem(1, "Trio (MIDI channels 1 / 2 / 3)", true, on);
+    for (int lane = 0; lane < 2; ++lane)
+    {
+        const char* id = lane == 0 ? "trioMid" : "trioStab";
+        auto* choice = dynamic_cast<juce::AudioParameterChoice*>(bass.apvts.getParameter(id));
+        if (choice == nullptr)
+            continue;
+        juce::PopupMenu sub;
+        for (int i = 0; i < choice->choices.size(); ++i)
+            sub.addItem(100 * (lane + 1) + i, choice->choices[i], true, choice->getIndex() == i);
+        menu.addSubMenu(lane == 0 ? "Channel 2 - Mid" : "Channel 3 - Stab", sub);
+    }
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(trioButton), [this, set, on](int result)
+    {
+        if (result == 1)
+            set("trio", on ? 0.0f : 1.0f);
+        else if (result >= 100 && result < 200)
+            set("trioMid", static_cast<float>(result - 100));
+        else if (result >= 200)
+            set("trioStab", static_cast<float>(result - 200));
+        trioButton.setButtonText(trioText());
+    });
+}
+
 void Bass808Editor::timerCallback()
 {
+    if (trioButton.getButtonText() != trioText())
+        trioButton.setButtonText(trioText());
     if (presetButton.getButtonText() != bass.presetName() + "  ...")
     {
         updatePresetName();
@@ -658,6 +711,7 @@ void Bass808Editor::resized()
         tabs[i].setBounds(12 + static_cast<int>(i) * 136, kTabTop, 130, kTabHeight);
     dragButton->setBounds(kWidth - 12 - 70, kTabTop, 70, kTabHeight);
     exportButton.setBounds(kWidth - 12 - 70 - 6 - 104, kTabTop, 104, kTabHeight);
+    trioButton.setBounds(kWidth - 12 - 70 - 6 - 104 - 6 - 90, kTabTop, 90, kTabHeight);
     screen.setBounds(12, kScreenTop, kWidth - 24, kScreenHeight);
     sectionStrip->setBounds(12, 374, kWidth - 24, 28);
     for (auto& page : pages)

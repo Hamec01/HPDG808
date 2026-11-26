@@ -93,6 +93,7 @@ if (BUILD_TESTING)
     add_test(NAME HPDG808_OscB COMMAND HPDG_Bass808Snapshot
         --osc-b "${CMAKE_BINARY_DIR}/checks/osc-b")
     add_test(NAME HPDG808_Memphis COMMAND HPDG_Bass808Snapshot --memphis-check)
+    add_test(NAME HPDG808_Trio COMMAND HPDG_Bass808Snapshot --trio-check)
     set_tests_properties(HPDG808_Memphis HPDG808_PresetBrowser HPDG808_DrawWave HPDG808_SynthTimeline
         HPDG808_AutoGrid HPDG808_OscB PROPERTIES TIMEOUT 240)
 endif()

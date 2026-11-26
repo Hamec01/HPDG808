@@ -65,6 +65,10 @@ private:
     std::unique_ptr<b808::ParamCombo> mode;
     std::unique_ptr<PlayButton> play;
     juce::TextButton exportButton { "EXPORT WAV" };
+    // Trio: one instance plays HPDG's three DnB Dancefloor bass lanes (MIDI channel 1 this sound, 2 a Mid, 3 a Stab preset)
+    juce::TextButton trioButton { "TRIO" };
+    void showTrioMenu();
+    juce::String trioText() const;
     std::unique_ptr<DragButton> dragButton;
     std::vector<std::unique_ptr<b808::ParamKnob>> headerKnobs;
     std::array<juce::TextButton, 5> tabs;

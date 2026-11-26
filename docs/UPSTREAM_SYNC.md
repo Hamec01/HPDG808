@@ -12,6 +12,11 @@ Ahead of that revision (2026-11-25): the preset bank has the six `Memphis Trap -
 fitted Memphis ones (`BassRetiredPresets.inc`), the same as HPDG's working copy. `Tests/Bass808MemphisLab.cpp` checks
 them (`--memphis-check`).
 
+Ahead of that revision (2026-11-26, HPDG branch `claude/dnb-dancefloor-29b25a`): DnB Dancefloor - eleven
+`Dancefloor - Sub / Mid / Stab` presets in place of the four `Modern - ` ones (retired), `BassSettings::lowCutHz` (the
+"Low Cut" parameter), and Trio (MIDI channels 1 / 2 / 3: this sound, a Mid preset, a Stab preset; `--trio-check`).
+All of `Source/Bass808/` again matches that HPDG branch.
+
 This standalone repository keeps its own CMake project, installer and minimal drawing helpers.
 HPDG's drum sequencer, lane adapter and experimental skins are outside this product's scope.
 The standalone Dark controls use the existing `Source/UI/` helpers without adding HPDG's

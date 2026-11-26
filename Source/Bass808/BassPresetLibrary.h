@@ -21,7 +21,8 @@ inline juce::StringArray bassSectionParameterIds(int section)
         case 2: return { "synthLevel", "smpLevel", "handoff", "smpInvert", "oscBLevel", "oscBShape", "oscBDecay",
                          "oscBSustain", "sub", "phantom" };
         case 3: return { "fltType", "cutoff", "reso", "fltKey", "fltEnv", "fltDecay", "vowel", "lfoRate",
-                         "lfoSync", "lfoDepth", "lfoRetrig", "satModel", "satDrive", "satHarm", "satEvenOdd", "satMix", "phantom" };
+                         "lfoSync", "lfoDepth", "lfoRetrig", "satModel", "satDrive", "satHarm", "satEvenOdd", "satMix", "phantom",
+                         "lowCut" };
         case 4: return { "mSub", "mSubHz", "mFreq", "mWidth", "mLowGain", "mHarmType", "mHarm", "mHarmSide",
                          "mDampen", "mThresh", "mDyn", "mRelease", "mLimit" };
         default: return {};

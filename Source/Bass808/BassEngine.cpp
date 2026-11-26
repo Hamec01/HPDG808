@@ -105,8 +105,9 @@ std::vector<BassPreset> readPresets(const PresetRow (&rows)[N])
 
 const std::vector<BassPreset>& bassPresets()
 {
-    // 198 sounds: the sound-matching fits to 1180 bass one-shots placed by genre and substyle, finished with the
-    // master and levelled (tools/bass_presets.py, docs/audit/BASS808_FIT.md), the six MemphisTrap M808s, the owner's
+    // 205 sounds: the sound-matching fits to 1180 bass one-shots placed by genre and substyle, finished with the
+    // master and levelled (tools/bass_presets.py, docs/audit/BASS808_FIT.md), the six MemphisTrap M808s, the eleven
+    // DnB Dancefloor Sub / Mid / Stab presets, the owner's
     // two LuxuryTrap fits and four utility subs. The table is generated: change the script, not the .inc.
     static constexpr PresetRow rows[] {
 #include "BassFactoryPresets.inc"
@@ -1002,6 +1003,30 @@ void BassEngine::processBusFilter(float* out, int n) noexcept
     }
 }
 
+void BassEngine::processLowCut(float* out, int n) noexcept
+{
+    // Off (0 Hz): untouched, so every sound without it renders as before. A preset value, not moved under a note.
+    if (settings.lowCutHz <= 0.0f)
+    {
+        for (auto& stage : lowCutStages)
+            stage.clear();
+        return;
+    }
+    static constexpr std::array<double, 2> ks { 1.0 / 0.54119610, 1.0 / 1.30656296 }; // 24 dB / octave Butterworth
+    const double g = std::tan(kPi * juce::jlimit(10.0, 0.45 * sampleRate, static_cast<double>(settings.lowCutHz)) / sampleRate);
+    for (int i = 0; i < n; ++i)
+    {
+        double x = out[i];
+        for (size_t k = 0; k < lowCutStages.size(); ++k)
+        {
+            double low = 0.0, band = 0.0, high = 0.0;
+            lowCutStages[k].tick(x, g, ks[k], low, band, high);
+            x = high;
+        }
+        out[i] = static_cast<float>(x);
+    }
+}
+
 void BassEngine::renderChunk(float* out, int n)
 {
     const bool wasActive = isActive() || busLastOut > 1.0e-6;
@@ -1016,6 +1041,7 @@ void BassEngine::renderChunk(float* out, int n)
         voice.render(out, lfoBuffer.data(), n);
 
     saturator.process(out, n, saturatorParams(settings)); // off: the voices pass untouched
+    processLowCut(out, n);
     processBusFilter(out, n);
     // the level (the lane's GAIN, DRIVE's make-up) glides in ~10 ms while the bass sounds; silent, it is set
     const double gain = dbToGain(settings.gainDb);

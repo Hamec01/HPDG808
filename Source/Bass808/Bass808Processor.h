@@ -113,6 +113,15 @@ private:
 
     BassEngine engine;
     BassMaster master;
+    // Trio (parameters "trio", "trioMid", "trioStab"): the voices of MIDI channels 2 and 3
+    struct TrioVoice
+    {
+        BassEngine engine;
+        BassMaster master;
+        const BassPreset* preset = nullptr;
+        std::vector<float> mono, left, right;
+    };
+    std::array<TrioVoice, 2> trio;
     int currentPreset = 0;
     juce::String userPresetName;
     std::vector<float> mono, left, right;

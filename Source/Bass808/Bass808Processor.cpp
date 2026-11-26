@@ -12,7 +12,8 @@ namespace bbg
 namespace
 {
 // Parameter ids are stable (saved in DAW projects). Version 1: the first HPDG 808; version 2: the
-// layers, filter, LFO, saturator and phantom; version 3: the master; version 4: OSC B.
+// layers, filter, LFO, saturator and phantom; version 3: the master; version 4: OSC B; version 6: Low Cut and Trio
+// (DnB Dancefloor, 2026-11-26).
 struct FloatParam
 {
     const char* id;
@@ -100,6 +101,7 @@ const std::vector<FloatParam>& floatParams()
         { "oscBShape", "OSC B Shape", &BassSettings::oscBShape, 0.0f, 1.0f, 0.0f, 0.0f, "", 4 },
         { "oscBDecay", "OSC B Decay", &BassSettings::oscBDecayMs, 5.0f, 2000.0f, 180.0f, 0.0f, "ms", 4 },
         { "oscBSustain", "OSC B Sustain", &BassSettings::oscBSustain, 0.0f, 1.0f, 0.0f, 0.0f, "", 4 },
+        { "lowCut", "Low Cut", &BassSettings::lowCutHz, 0.0f, 400.0f, 0.0f, 1.0f, "Hz", 6 },
     };
     return list;
 }
@@ -140,6 +142,8 @@ juce::String valueText(const FloatParam& p, float value)
         return "Off";
     if (std::string_view(p.id) == "click" && value <= -59.5f)
         return "off";
+    if (std::string_view(p.id) == "lowCut" && value < 0.5f)
+        return "off";
     if ((std::string_view(p.id) == "synthLevel" || std::string_view(p.id) == "smpLevel") && value <= -59.5f)
         return "off";
     if (std::string_view(p.id) == "handoff" && value < 0.5f)
@@ -163,6 +167,35 @@ juce::String valueText(const FloatParam& p, float value)
         return f < 0.05f ? juce::String(vowels[i]) : (f > 0.95f ? juce::String(vowels[i + 1]) : juce::String(vowels[i]) + "-" + vowels[i + 1]);
     }
     return b808::formatValue(value, p.unit);
+}
+// Trio (DnB Dancefloor's three bass lanes in one instance): MIDI channel 1 plays the sound being edited, 2 a "Mid" and
+// 3 a "Stab" factory preset (HPDG exports Mid Bass A / B on channels 2 / 3).
+const std::vector<const BassPreset*>& trioPresets(bool stab)
+{
+    static const auto lists = []
+    {
+        std::array<std::vector<const BassPreset*>, 2> out;
+        for (const auto& preset : bassPresets())
+        {
+            const juce::String name(preset.name);
+            if (name.startsWith("Dancefloor - Mid "))
+                out[0].push_back(&preset);
+            else if (name.startsWith("Dancefloor - Stab "))
+                out[1].push_back(&preset);
+        }
+        return out;
+    }();
+    return lists[stab ? 1 : 0];
+}
+
+juce::StringArray trioChoices(bool stab)
+{
+    juce::StringArray names;
+    for (const auto* preset : trioPresets(stab))
+        names.add(juce::String(preset->name).fromFirstOccurrenceOf(" - ", false, false));
+    if (names.isEmpty())
+        names.add("-");
+    return names;
 }
 } // namespace
 
@@ -272,6 +305,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout Bass808Processor::createLayo
                                                                 juce::StringArray::fromTokens(p.choices, ",", ""), defaults.*(p.field)));
     for (const auto& p : boolParams())
         layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { p.id, p.version }, p.name, defaults.*(p.field)));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { "trio", 6 }, "Trio", false));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "trioMid", 6 }, "Trio Ch 2", trioChoices(false), 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "trioStab", 6 }, "Trio Ch 3", trioChoices(true), 0));
     return layout;
 }
 
@@ -490,6 +526,12 @@ void Bass808Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
     master.prepare(sampleRate);
     mono.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
     left = right = mono;
+    for (auto& voice : trio)
+    {
+        voice.engine.prepare(sampleRate, samplesPerBlock);
+        voice.master.prepare(sampleRate);
+        voice.mono = voice.left = voice.right = mono;
+    }
     setLatencySamples(engine.latencySamples());
 }
 
@@ -509,6 +551,8 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
         mono.resize(static_cast<size_t>(numSamples)); // a host that sends more than it announced
         left.resize(mono.size());
         right.resize(mono.size());
+        for (auto& voice : trio)
+            voice.mono = voice.left = voice.right = mono;
     }
     keyboardState.processNextMidiBuffer(midi, 0, numSamples, true);
 
@@ -535,32 +579,81 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     engine.setTempo(hostTempo());
     const auto settings = currentSettings();
     engine.setSettings(settings);
+    const bool trioOn = apvts.getRawParameterValue("trio")->load() >= 0.5f;
+    for (size_t v = 0; v < trio.size(); ++v)
+    {
+        const auto& list = trioPresets(v == 1);
+        if (!list.empty())
+        {
+            const int index = juce::jlimit(0, static_cast<int>(list.size()) - 1,
+                                           juce::roundToInt(apvts.getRawParameterValue(v == 0 ? "trioMid" : "trioStab")->load()));
+            if (trio[v].preset != list[static_cast<size_t>(index)])
+            {
+                trio[v].preset = list[static_cast<size_t>(index)];
+                trio[v].engine.setSettings(trio[v].preset->settings);
+            }
+        }
+        trio[v].engine.setTempo(hostTempo());
+        if (!trioOn && trio[v].engine.isActive())
+            trio[v].engine.allNotesOff();
+    }
+    // Trio: MIDI channel 2 / 3 go to the Mid / Stab voices; everything else (off: every channel) to the main sound
+    const auto target = [&](const juce::MidiMessage& m) -> BassEngine&
+    {
+        if (trioOn && m.getChannel() == 2 && trio[0].preset != nullptr) return trio[0].engine;
+        if (trioOn && m.getChannel() == 3 && trio[1].preset != nullptr) return trio[1].engine;
+        return engine;
+    };
+    const auto renderAll = [&](int from, int count)
+    {
+        engine.render(mono.data() + from, count);
+        for (auto& voice : trio)
+            if (trioOn || voice.engine.isActive())
+                voice.engine.render(voice.mono.data() + from, count);
+    };
+    for (auto& voice : trio)
+        std::fill(voice.mono.begin(), voice.mono.begin() + numSamples, 0.0f);
 
     int position = 0;
     for (const auto metadata : midi)
     {
         const int at = juce::jlimit(position, numSamples, metadata.samplePosition);
         if (at > position)
-            engine.render(mono.data() + position, at - position);
+            renderAll(position, at - position);
         position = at;
         const auto message = metadata.getMessage();
         if (message.isNoteOn())
         {
-            engine.noteOn(message.getNoteNumber(), message.getFloatVelocity());
+            target(message).noteOn(message.getNoteNumber(), message.getFloatVelocity());
             lastPlayedNote.store(message.getNoteNumber());
         }
         else if (message.isNoteOff())
-            engine.noteOff(message.getNoteNumber());
+            target(message).noteOff(message.getNoteNumber());
         else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
             engine.allNotesOff();
+            for (auto& voice : trio)
+                voice.engine.allNotesOff();
+        }
     }
     if (numSamples > position)
-        engine.render(mono.data() + position, numSamples - position);
+        renderAll(position, numSamples - position);
 
     // the master: mono in, stereo out (a mono output gets the middle: left + right is the mono sound)
     master.process(mono.data(), left.data(), right.data(), numSamples, settings);
     masterCorrelationNow.store(master.correlation(), std::memory_order_relaxed);
     masterGainNow.store(master.gainChangeDb(), std::memory_order_relaxed);
+    // the Trio voices, each through its own preset's master, summed after the main sound's
+    for (auto& voice : trio)
+        if (voice.preset != nullptr && (trioOn || voice.engine.isActive()))
+        {
+            voice.master.process(voice.mono.data(), voice.left.data(), voice.right.data(), numSamples, voice.preset->settings);
+            for (int i = 0; i < numSamples; ++i)
+            {
+                left[static_cast<size_t>(i)] += voice.left[static_cast<size_t>(i)];
+                right[static_cast<size_t>(i)] += voice.right[static_cast<size_t>(i)];
+            }
+        }
 
     float peak = 0.0f;
     int write = scopeWrite.load(std::memory_order_relaxed);
@@ -662,13 +755,21 @@ void Bass808Processor::setStateInformation(const void* data, int sizeInBytes)
     const BassSettings defaults;
     for (const auto& p : floatParams())
     {
-        if (p.version != 4 || state.getChildWithProperty("id", p.id).isValid())
+        if (p.version < 4 || state.getChildWithProperty("id", p.id).isValid())
             continue;
         juce::ValueTree parameter("PARAM");
         parameter.setProperty("id", p.id, nullptr);
         parameter.setProperty("value", defaults.*(p.field), nullptr);
         state.appendChild(parameter, nullptr);
     }
+    for (const char* id : { "trio", "trioMid", "trioStab" }) // off / first preset in a project from before Trio
+        if (!state.getChildWithProperty("id", id).isValid())
+        {
+            juce::ValueTree parameter("PARAM");
+            parameter.setProperty("id", id, nullptr);
+            parameter.setProperty("value", 0.0f, nullptr);
+            state.appendChild(parameter, nullptr);
+        }
     setDrawWave(std::move(wave));
     apvts.replaceState(state);
     currentPreset = juce::jlimit(0, getNumPrograms() - 1, static_cast<int>(apvts.state.getProperty("preset", 0)));

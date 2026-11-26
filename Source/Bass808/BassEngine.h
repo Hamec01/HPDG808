@@ -36,7 +36,7 @@ struct BassPreset
     BassSettings settings;
 };
 
-// 198 factory sounds by genre and substyle (tools/bass_presets.py; Source/Bass808/BassFactoryPresets.inc).
+// 205 factory sounds by genre and substyle (tools/bass_presets.py; Source/Bass808/BassFactoryPresets.inc).
 const std::vector<BassPreset>& bassPresets();
 // Removed factory sounds (BassRetiredPresets.inc): only to recognise unedited copies in saved projects.
 const std::vector<BassPreset>& retiredBassPresets();
@@ -210,6 +210,8 @@ private:
     float glideOverrideMs = 0.0f;
 
     std::array<BassVoice::Svf, 2> busStages {};
+    std::array<BassVoice::Svf, 2> lowCutStages {}; // BassSettings::lowCutHz
+    void processLowCut(float* out, int n) noexcept;
     double busPosition = 0.0;       // the smoothed busFilter
     int busKind = 0;                // -1 low-pass, 1 high-pass, 0 off
     std::array<BassVoice::Svf, 2> busFadeStages {}; // the filter faded out after a switch

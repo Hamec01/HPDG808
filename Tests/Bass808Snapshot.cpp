@@ -550,6 +550,107 @@ private:
     int tab = 0;
     bool settled = false, started = false;
 };
+
+// Trio (DnB Dancefloor, 2026-11-26): MIDI channel 2 / 3 play the chosen Mid / Stab presets next to the main sound,
+// off they go to the main sound; Low Cut removes the lows of a mid preset; a state saved before Trio loads it off.
+int checkTrio()
+{
+    using namespace bbg;
+    int failures = 0;
+    const auto check = [&failures](bool ok, const char* what)
+    {
+        std::printf("[%s] %s\n", ok ? "ok" : "FAIL", what);
+        failures += ok ? 0 : 1;
+    };
+    const auto render = [](Bass808Processor& bass, int channel, int note)
+    {
+        juce::AudioBuffer<float> buffer(2, 512);
+        double energy = 0.0;
+        for (int block = 0; block < 60; ++block)
+        {
+            juce::MidiBuffer midi;
+            if (block == 0)
+                midi.addEvent(juce::MidiMessage::noteOn(channel, note, 0.9f), 0);
+            if (block == 50)
+                midi.addEvent(juce::MidiMessage::noteOff(channel, note), 0);
+            bass.processBlock(buffer, midi);
+            for (int i = 0; i < buffer.getNumSamples(); ++i)
+                energy += static_cast<double>(buffer.getSample(0, i)) * buffer.getSample(0, i);
+        }
+        return energy;
+    };
+    const auto set = [](Bass808Processor& bass, const char* id, float value)
+    {
+        if (auto* p = bass.apvts.getParameter(id))
+            p->setValueNotifyingHost(p->convertTo0to1(value));
+    };
+    // lows of a buffer: energy under 80 Hz of a held note, by a one-pole low-pass
+    const auto lowEnergy = [](const BassSettings& s)
+    {
+        const auto audio = BassEngine::renderNote(s, nullptr, 29, 1.0, 48000.0);
+        double y = 0.0, e = 0.0;
+        const double a = 1.0 - std::exp(-2.0 * 3.14159265 * 80.0 / 48000.0);
+        for (const float x : audio)
+        {
+            y += a * (x - y);
+            e += y * y;
+        }
+        return e;
+    };
+
+    Bass808Processor bass;
+    bass.setPlayConfigDetails(0, 2, 48000.0, 512);
+    bass.prepareToPlay(48000.0, 512);
+    const double offCh2 = render(bass, 2, 41);
+    set(bass, "trio", 1.0f);
+    const double onCh1 = render(bass, 1, 41);
+    const double onCh2 = render(bass, 2, 41);
+    const double onCh3 = render(bass, 3, 41);
+    check(offCh2 > 1.0e-6 && onCh1 > 1.0e-6 && onCh2 > 1.0e-6 && onCh3 > 1.0e-6, "every channel sounds");
+    check(std::abs(onCh2 - offCh2) > 0.05 * offCh2, "Trio: channel 2 plays another sound than the main one");
+    check(std::abs(onCh3 - onCh2) > 0.05 * onCh2, "Trio: channel 3 plays another sound than channel 2");
+    set(bass, "trio", 0.0f);
+    const double backCh2 = render(bass, 2, 41);
+    check(std::abs(backCh2 - offCh2) < 0.02 * offCh2 + 1.0e-9, "Trio off: channel 2 is the main sound again");
+
+    const BassPreset* reese = nullptr;
+    for (const auto& preset : bassPresets())
+        if (juce::String(preset.name) == "Dancefloor - Mid Reese")
+            reese = &preset;
+    check(reese != nullptr && reese->settings.lowCutHz > 100.0f, "Mid Reese has its low cut");
+    if (reese != nullptr)
+    {
+        auto open = reese->settings;
+        open.lowCutHz = 0.0f;
+        check(lowEnergy(reese->settings) < 0.25 * lowEnergy(open), "Low Cut takes the lows out");
+    }
+    int modern = 0;
+    for (const auto& preset : bassPresets())
+        modern += juce::String(preset.name).startsWith("Modern - ") ? 1 : 0;
+    check(modern == 0, "the old Modern presets left the bank");
+
+    // a state from before Trio / Low Cut: both off
+    juce::MemoryBlock state;
+    bass.getStateInformation(state);
+    auto xml = juce::AudioProcessor::getXmlFromBinary(state.getData(), static_cast<int>(state.getSize()));
+    for (auto* child = xml->getFirstChildElement(); child != nullptr;)
+    {
+        auto* next = child->getNextElement();
+        const auto id = child->getStringAttribute("id");
+        if (id == "trio" || id == "trioMid" || id == "trioStab" || id == "lowCut")
+            xml->removeChildElement(child, true);
+        child = next;
+    }
+    set(bass, "trio", 1.0f);
+    set(bass, "lowCut", 200.0f);
+    juce::MemoryBlock old;
+    juce::AudioProcessor::copyXmlToBinary(*xml, old);
+    bass.setStateInformation(old.getData(), static_cast<int>(old.getSize()));
+    check(bass.apvts.getRawParameterValue("trio")->load() < 0.5f && bass.apvts.getRawParameterValue("lowCut")->load() < 0.5f,
+          "an older state loads with Trio and Low Cut off");
+    std::printf("%s\n", failures == 0 ? "PASS" : "FAIL");
+    return failures == 0 ? 0 : 1;
+}
 } // namespace
 
 int main(int argc, char* argv[])
@@ -561,6 +662,8 @@ int main(int argc, char* argv[])
         return checkFullReference(juce::File(juce::String(argv[2])), juce::File(juce::String(argv[3])));
     if (argc == 3 && juce::String(argv[1]) == "--auto-grid-check")
         return checkAutoGrid(juce::File(juce::String(argv[2])));
+    if (argc == 2 && juce::String(argv[1]) == "--trio-check")
+        return checkTrio();
     if (argc == 2 && juce::String(argv[1]) == "--memphis-check")
         return runBass808MemphisLab();
     if (argc == 3 && juce::String(argv[1]) == "--osc-b")

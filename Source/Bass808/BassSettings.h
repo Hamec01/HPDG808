@@ -93,6 +93,9 @@ struct BassSettings
     // bus filter after the saturator (HPDG's lane strip): -1 .. 0 closes the highs 20 kHz -> 200 Hz,
     // 0 .. 1 opens a low cut 20 -> 400 Hz; 0: off
     float busFilter = 0.0f;
+    // the preset's own low cut after the saturator (24 dB / octave), Hz; 0: off. A mid bass that plays over a separate
+    // sub (DnB Dancefloor's Mid A / Mid B lanes) keeps its lows out of the sub's band (the lane's FILTER is the user's).
+    float lowCutHz = 0.0f;
 
     // master (BassMaster, the HPDG 808 plugin only; the defaults pass the sound untouched)
     int masterSub = 0;               // 0 off, 1 Cut, 2 Boost

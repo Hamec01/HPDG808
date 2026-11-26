@@ -137,6 +137,9 @@ juce::ValueTree bassSettingsToTree(const BassSettings& settings)
         tree.setProperty(f.id, settings.*(f.member), nullptr);
     for (const auto& f : kBools)
         tree.setProperty(f.id, settings.*(f.member), nullptr);
+    // only when on: every sound saved before it existed keeps the same tree (saved factory copies still match)
+    if (settings.lowCutHz > 0.0f)
+        tree.setProperty("lowCutHz", settings.lowCutHz, nullptr);
     writeDrawWave(tree, settings.drawnWave);
     return tree;
 }
@@ -155,6 +158,8 @@ BassSettings bassSettingsFromTree(const juce::ValueTree& tree)
     for (const auto& f : kBools)
         if (tree.hasProperty(f.id))
             settings.*(f.member) = static_cast<bool>(tree.getProperty(f.id));
+    if (tree.hasProperty("lowCutHz"))
+        settings.lowCutHz = static_cast<float>(tree.getProperty("lowCutHz"));
     settings.drawnWave = readDrawWave(tree);
     settings.wave = juce::jlimit(0, BassSettings::NumWaves - 1, settings.wave);
     settings.filterType = juce::jlimit(0, BassSettings::NumFilters - 1, settings.filterType);
@@ -163,6 +168,7 @@ BassSettings bassSettingsFromTree(const juce::ValueTree& tree)
     settings.lfoSync = juce::jlimit(0, 8, settings.lfoSync);
     settings.subOctave = juce::jlimit(0, 1, settings.subOctave);
     settings.busFilter = juce::jlimit(-1.0f, 1.0f, settings.busFilter);
+    settings.lowCutHz = juce::jlimit(0.0f, 400.0f, settings.lowCutHz);
     settings.masterSub = juce::jlimit(0, 2, settings.masterSub);
     settings.masterHarmType = juce::jlimit(0, 2, settings.masterHarmType);
     return settings;
