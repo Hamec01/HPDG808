@@ -117,13 +117,13 @@ struct BassSettings
     // every adv field, so a Classic sound stays bit-identical. Advanced shares the note lifecycle (held stack,
     // Glide / Legato, the 3 ms choke), the bus filter, Low Cut (on its mids only) and the gain with Classic.
     enum Engine { Classic = 0, Advanced };
-    enum AdvWave { AdvSine = 0, AdvTriangle, AdvSaw, AdvSquare, AdvPulse, NumAdvWaves };
+    enum AdvWave { AdvSine = 0, AdvTriangle, AdvSaw, AdvSquare, AdvPulse, AdvWavetable, NumAdvWaves };
     enum AdvModSource { ModNone = 0, ModLfo1, ModLfo2, ModLfo3, ModLfo4, ModFilterEnv, ModModEnv, ModAmpEnv, ModVelocity,
                         ModNote, NumModSources };
     enum AdvModDest { DestNone = 0, DestPitch, DestOscAPitch, DestOscBPitch, DestOscCPitch, DestOscALevel, DestOscBLevel,
                       DestOscCLevel, DestOscAShape, DestOscBShape, DestOscCShape, DestOscAPm, DestOscBPm, DestOscCPm,
                       DestCutoffA, DestResoA, DestCutoffB, DestDrive, DestDetune, DestNoise, DestSub, DestWidth, DestAmp,
-                      NumModDests };
+                      DestOscAWt, DestOscBWt, DestOscCWt, NumModDests }; // append only: saved slots hold the numbers
     struct AdvOsc
     {
         bool on = false;
@@ -142,6 +142,8 @@ struct BassSettings
         int pmFrom = -1;          // -1: none, else an oscillator of a HIGHER index (C -> A / B, B -> A: acyclic)
         float pmAmount = 0.0f;    // 0 .. 1 (index up to 4 radians)
         bool audible = true;      // off: only modulates (PM)
+        int table = 0;            // Wavetable: BassWavetable.h's tables (0 Basic Shapes, 1 Kick Pulse, ...)
+        float wtPos = 0.0f;       // Wavetable: the Position along the table, 0 .. 1
     };
     struct AdvEnv
     {
@@ -167,6 +169,8 @@ struct BassSettings
     int advSubOctave = -1;        // -2 .. 0 from the played note
     float advSubLevelDb = -6.0f;
     float advSubWarm = 0.0f;      // 0 .. 1 soft saturation of the sub alone
+    float advSubH3 = 0.0f;        // the sub's 3rd / 5th harmonic, 0 .. 1 of its fundamental (exact sines: no aliasing;
+    float advSubH5 = 0.0f;        // Dimension's sub: 67 / 33 / 4 % -> H3 0.49, H5 0.06)
     float advNoiseDb = -60.0f;    // white noise into the mids' filter (attack, texture); -60 off
     // filters (the mids): A, B in series or parallel
     int advFilterAType = LP24;    // LP12, LP24, HP12, BP

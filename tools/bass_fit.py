@@ -21,7 +21,28 @@ import bass_profile as bp  # noqa: E402
 # a phrase like a Dancefloor drop line: G1 roots, a re-attack, Bb / F moves (beats at 174 BPM)
 PHRASE = '31:0:1.75 31:1.75:1 34:3:1 31:4:2.5 29:6.5:0.75 26:7.25:0.75'
 
+# a pulse line (Dimension / Sub Focus): short re-attacked notes on the 8th / dotted grid
+PULSE_PHRASE = '31:0:0.5 31:0.75:0.5 31:1.5:0.5 34:2.5:0.5 31:3:0.5 29:4:0.5 29:4.75:0.5 26:5.5:1 31:6.5:0.5 31:7.25:0.5'
+
 FAMILIES = {
+    # the pulse bass of the tutorials: saw (unison 4) + the Kick Pulse wavetable, the filter opened by an envelope,
+    # a mod envelope on the drive, OTT-like multiband; the sub: Dimension's (bins 1 / 3 / 5 at 67 / 33 / 4 %)
+    'pulse': {
+        'phrase': PULSE_PHRASE,
+        'base': 'advEngine=1 mode=0 advSubOn=1 advSubOct=0 advSubH3=0.49 advSubH5=0.06 advOscAOn=1 advOscAWave=2 advOscAUnison=4 '
+                'advOscBOn=1 advOscBWave=5 advOscBTable=1 advFltAType=1 advFenvA=1 advFenvS=0.15 advFenvR=80 advAmpA=1 advAmpR=60 '
+                'advMod1Src=6 advMod1Dst=17 advMenvA=1 advMenvS=0 advMonoHz=250 masterLimit=1',
+        'ranges': {
+            'advSubLevel': (-12, 0),
+            'advOscAOct': (0, 1, 'int'), 'advOscADetune': (0.1, 0.5), 'advOscASpread': (0.3, 1.0), 'advOscALevel': (-18, 0),
+            'advOscBOct': (-1, 1, 'int'), 'advOscBWtPos': (0, 1), 'advOscBLevel': (-18, 0),
+            'advCutA': (80, 1500, 'log'), 'advResA': (0, 0.5), 'advEnvA': (2, 7), 'advFenvD': (60, 400, 'log'),
+            'advAmpD': (120, 600, 'log'), 'advAmpS': (0.2, 0.9),
+            'advDrive': (0, 18), 'advMod1Amt': (0.1, 0.8), 'advMenvD': (60, 400, 'log'),
+            'advFxDrvModel': (0, 6, 'int'), 'advFxDrv': (0, 18), 'advMb': (0.2, 1), 'advMbTime': (10, 120, 'log'),
+            'lowCutHz': (100, 250, 'log'), 'advWidth': (0.8, 1.8), 'advMidLevel': (-24, 0), 'gainDb': (-18, 0),
+        },
+    },
     # full bass (sub + mids): the reference's whole bass stem
     'reese': {
         'base': 'advEngine=1 mode=1 advSubOn=1 advSubOct=0 advOscAOn=1 advOscAWave=2 advOscBOn=1 advOscBWave=2 '
@@ -90,7 +111,7 @@ def evaluate(exe, work, family, round_no, candidates, refs):
     out = os.path.join(work, f'{family}_r{round_no}')
     with open(spec, 'w') as f:
         for i, c in enumerate(candidates):
-            f.write(f'c{i:03d} | {row(FAMILIES[family]["base"], c)} | {PHRASE}\n')
+            f.write(f'c{i:03d} | {row(FAMILIES[family]["base"], c)} | {FAMILIES[family].get("phrase", PHRASE)}\n')
     subprocess.run([exe, '--adv-render', spec, out], check=True, stdout=subprocess.DEVNULL)
     scores = []
     for i, c in enumerate(candidates):

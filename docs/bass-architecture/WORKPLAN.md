@@ -71,7 +71,12 @@ HPDG + HPDG808 as products. Learning material: 20 Dancefloor tutorials (transcri
 - [x] Sub: sine/tri, octave −2..0, level, mono, direct out (no mid FX), clean/warm
 - [x] Noise (attack/texture): level (colour: via filters)
 - [x] Reese = template (2+ detuned saws) not a new wave
-- [ ] WT position over Draw Wave frames (later; reuse BassDrawWave band-limited tables)
+- [x] wavetable oscillator (BassWavetable.*, 2026-11-27): 8 own tables (Basic Shapes, Kick Pulse, Harmonic Sweep, PWM,
+      Hard Sync, Fold, Vowel, Growl), 32 frames, 9 mip levels (512 .. 2 harmonics, under 0.45 fs), 8x oversized, Hermite
+      reads, Position modulatable (DestOscA/B/CWt); `--wavetable-check`: off-harmonic energy < -50 dB (worst -54.6), frames
+      at peak 1, no step under a Position LFO, 21 voices 2 % of a core, tables built in 70 ms
+- [x] sub 3rd / 5th harmonics (advSubH3 / advSubH5, exact sines; check: H3 0.490 / H5 0.060, rest -87.6 dB)
+- [ ] WT from the user's Draw Wave frames (reuse BassDrawWave)
 - [ ] gate: pitch, alias, L/R, mono loss renders; C off ≈ 0 CPU; demo patches (Clean Sub, Warm Sub, Soft/Wide Reese, Analog Round, Boom Bap, Hybrid 808)
 
 ### P3 Modulation & FX
@@ -128,4 +133,8 @@ HPDG + HPDG808 as products. Learning material: 20 Dancefloor tutorials (transcri
 - Drums: a top kick layered on the kick; kick and snare mono, the kick loudest; hats every beat + one between the beats
   with changing samples, layered hats, a cowbell; parallel compression and distortion on the drum bus; a crash every
   4 bars; break layers chopped in for variation.
+- Round 7 (2026-11-27): Mid Pulse (saw x4 + Kick Pulse wavetable, filter env, mod env -> drive; fitted, distance 12.2)
+  on a new Mid A family "kickpulse" (3-3-2 re-attacks inside the sub's notes); Sub Harmonic (H3 0.2 / H5 0.03: the
+  recipe's 0.49 gave -8 dB at 200 Hz where the references have -21..-28: the measurement wins); Sub Heavy / Harmonic
+  levelled with Sub Clean / Warm / Legato (they were 5 dB over). 8 loops: distance 10.3-15.2 (refs 8.7-16.4).
 

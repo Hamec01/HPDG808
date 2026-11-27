@@ -41,6 +41,7 @@ target_sources(HPDG808
         Source/Bass808/Bass808Screen.cpp
         Source/Bass808/BassAdvanced.cpp
         Source/Bass808/BassAdvancedParams.cpp
+        Source/Bass808/BassWavetable.cpp
         Source/Bass808/BassEngine.cpp
         Source/Bass808/BassDrawWave.cpp
         Source/Bass808/BassSample.cpp
@@ -80,6 +81,7 @@ if (BUILD_TESTING)
         Tests/Bass808MemphisLab.cpp
         Tests/Bass808Golden.cpp
         Tests/Bass808AdvancedLab.cpp
+        Tests/Bass808WavetableLab.cpp
     )
     target_include_directories(HPDG_Bass808Snapshot PRIVATE Source)
     target_link_libraries(HPDG_Bass808Snapshot
@@ -98,6 +100,7 @@ if (BUILD_TESTING)
         --osc-b "${CMAKE_BINARY_DIR}/checks/osc-b")
     add_test(NAME HPDG808_Memphis COMMAND HPDG_Bass808Snapshot --memphis-check)
     add_test(NAME HPDG808_Trio COMMAND HPDG_Bass808Snapshot --trio-check)
+    add_test(NAME HPDG808_Wavetable COMMAND HPDG_Bass808Snapshot --wavetable-check)
     # Bass Architecture 2.0: the Classic sound of every preset stays bit-identical (Tests/golden/classic_v1.tsv)
     add_test(NAME HPDG808_ClassicGolden COMMAND HPDG_Bass808Snapshot
         --golden-check "${CMAKE_SOURCE_DIR}/Tests/golden/classic_v1.tsv")

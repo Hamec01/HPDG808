@@ -19,6 +19,7 @@ int runBass808PresetsLab(const juce::File& out);
 int writeGolden(const juce::File& file);
 int checkGolden(const juce::File& file);
 int runAdvancedRender(const juce::File& spec, const juce::File& out, double bpm);
+int checkWavetables();
 
 namespace
 {
@@ -671,6 +672,8 @@ int main(int argc, char* argv[])
         return writeGolden(juce::File(juce::String(argv[2])));
     if (argc == 3 && juce::String(argv[1]) == "--golden-check")
         return checkGolden(juce::File(juce::String(argv[2])));
+    if (argc == 2 && juce::String(argv[1]) == "--wavetable-check")
+        return checkWavetables();
     if (argc == 2 && juce::String(argv[1]) == "--trio-check")
         return checkTrio();
     if (argc == 2 && juce::String(argv[1]) == "--memphis-check")

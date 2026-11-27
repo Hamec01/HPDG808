@@ -6,6 +6,7 @@
 
 #include "Bass808/BassSaturator.h"
 #include "Bass808/BassSettings.h"
+#include "Bass808/BassWavetable.h"
 
 namespace bbg::adv
 {
@@ -72,7 +73,8 @@ private:
         int voices = 1;
         std::array<double, kMaxUnison> dt {}, panL {}, panR {};
         double norm = 1.0, shape = 0.0, pm = 0.0;
-        Ramp level;
+        int table = 0;
+        Ramp level, wtPos;
     };
     struct Control
     {
@@ -80,9 +82,10 @@ private:
         Ramp noise, gA, kA, gB, kB, width, mid, sub;
         bool driveOn = false, bypassA = true, started = false;
         double driveG = 1.0, driveNorm = 1.0, subDt = 0.0, subWarm = 1.0, subWarmNorm = 1.0;
-        std::array<Ramp*, 11> ramps() noexcept
+        std::array<Ramp*, 14> ramps() noexcept
         {
-            return { &osc[0].level, &osc[1].level, &osc[2].level, &noise, &gA, &kA, &gB, &kB, &width, &mid, &sub };
+            return { &osc[0].level, &osc[1].level, &osc[2].level, &osc[0].wtPos, &osc[1].wtPos, &osc[2].wtPos,
+                     &noise, &gA, &kA, &gB, &kB, &width, &mid, &sub };
         }
     };
     double oscSample(int wave, double t, double dt, double shape) const noexcept;
@@ -99,6 +102,7 @@ private:
     std::array<Lfo, 4> lfo {};
     std::array<std::array<double, 4>, 2> svfA {}, svfB {}; // [channel][ic1, ic2 per stage x 2]
     std::uint32_t noiseSeed = 0x9e3779b9u;
+    const wt::Bank* tables = nullptr; // built in prepare(), never on the audio thread
     Control ctl;
     int controlLeft = 0;
 };

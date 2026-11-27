@@ -157,6 +157,7 @@ double Lfo::tick(int shape, double dt) noexcept
 void Voice::prepare(double newSampleRate) noexcept
 {
     sampleRate = newSampleRate > 1000.0 ? newSampleRate : 48000.0;
+    tables = &wt::Bank::get(); // the first call builds the tables (allocates): here, not while rendering
 }
 
 void Voice::setSettings(const BassSettings& settings) noexcept
@@ -297,6 +298,8 @@ void Voice::updateControl(double hz) noexcept
         c.pm = (o.pmFrom > i && o.pmFrom < 3)
             ? juce::jlimit(0.0, 1.0, o.pmAmount + mod[static_cast<size_t>(BassSettings::DestOscAPm + i)]) * 4.0 / kTwoPi : 0.0;
         c.level.target = o.audible ? dbToGain(o.levelDb + mod[static_cast<size_t>(BassSettings::DestOscALevel + i)] * 24.0) : 0.0;
+        c.table = juce::jlimit(0, wt::Bank::count() - 1, o.table);
+        c.wtPos.target = juce::jlimit(0.0, 1.0, static_cast<double>(o.wtPos) + mod[static_cast<size_t>(BassSettings::DestOscAWt + i)]);
     }
     ctl.noise.target = (s.advNoiseDb > -59.5f || mod[BassSettings::DestNoise] > 0.0)
         ? dbToGain(s.advNoiseDb + mod[BassSettings::DestNoise] * 24.0) : 0.0;
@@ -362,7 +365,9 @@ void Voice::tick(double hz, double gain, float& subOut, float& left, float& righ
         {
             auto& ph = state.phase[static_cast<size_t>(v)];
             const double dt = c.dt[static_cast<size_t>(v)];
-            const double x = oscSample(o.wave, pm != 0.0 ? wrap(ph + pm) : ph, dt, c.shape);
+            const double t = pm != 0.0 ? wrap(ph + pm) : ph;
+            const double x = o.wave == BassSettings::AdvWavetable && tables != nullptr ? tables->read(c.table, c.wtPos.now, t, dt)
+                                                                                       : oscSample(o.wave, t, dt, c.shape);
             ph += dt;
             if (ph >= 1.0)
                 ph -= 1.0;
@@ -413,6 +418,10 @@ void Voice::tick(double hz, double gain, float& subOut, float& left, float& righ
     if (s.advSubOn)
     {
         double x = s.advSubWave == 1 ? 1.0 - 4.0 * std::abs(subPhase - 0.5) : std::sin(kTwoPi * subPhase);
+        if (s.advSubH3 > 0.0005f)
+            x += s.advSubH3 * std::sin(3.0 * kTwoPi * subPhase);
+        if (s.advSubH5 > 0.0005f)
+            x += s.advSubH5 * std::sin(5.0 * kTwoPi * subPhase);
         subPhase += ctl.subDt;
         if (subPhase >= 1.0)
             subPhase -= 1.0;

@@ -45,7 +45,8 @@ public:
                               { Item::Knob, id("Unison"), "Unison" }, { Item::Knob, id("Detune"), "Detune" },
                               { Item::Knob, id("Spread"), "Spread" }, { Item::Knob, id("Phase"), "Phase" },
                               { Item::Toggle, id("RandPhase"), "RANDOM" }, { Item::Combo, id("PmFrom"), "PM From" },
-                              { Item::Knob, id("Pm"), "PM" }, { Item::Toggle, id("Audible"), "AUDIBLE" } } },
+                              { Item::Knob, id("Pm"), "PM" }, { Item::Toggle, id("Audible"), "AUDIBLE" },
+                              { Item::Combo, id("Table"), "Wavetable" }, { Item::Knob, id("WtPos"), "WT Pos" } } },
             });
         };
         pages.push_back(osc("ENGINE", "OSC A", "advOscA"));
@@ -53,7 +54,8 @@ public:
         pages.push_back(osc("ENGINE", "OSC C", "advOscC"));
         pages.push_back(std::make_unique<Page>(state, std::vector<Page::Group> {
             { "SUB", 2, { { Item::Toggle, "advSubOn", "ON" }, { Item::Combo, "advSubWave", "Wave" }, { Item::Knob, "advSubOct", "Octave" },
-                          { Item::Knob, "advSubLevel", "Level" }, { Item::Knob, "advSubWarm", "Warm" } } },
+                          { Item::Knob, "advSubLevel", "Level" }, { Item::Knob, "advSubWarm", "Warm" },
+                          { Item::Knob, "advSubH3", "3rd Harm" }, { Item::Knob, "advSubH5", "5th Harm" } } },
             { "NOISE", 1, { { Item::Knob, "advNoise", "Level" } } },
             { "FILTER A", 2, { { Item::Combo, "advFltAType", "Type" }, { Item::Knob, "advCutA", "Cutoff" }, { Item::Knob, "advResA", "Resonance" },
                                { Item::Knob, "advKeyA", "Key" }, { Item::Knob, "advEnvA", "Env" }, { Item::Knob, "advDrive", "Drive" } } },

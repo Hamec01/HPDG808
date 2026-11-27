@@ -58,14 +58,15 @@ int asInt(float v) { return juce::roundToInt(v); }
 #define ADV_I(field) [](const S& s) { return static_cast<float>(s.field); }, [](S& s, float v) { s.field = asInt(v); }
 #define ADV_B(field) [](const S& s) { return s.field ? 1.0f : 0.0f; }, [](S& s, float v) { s.field = v >= 0.5f; }
 
-constexpr const char* kWaves = "Sine,Triangle,Saw,Square,Pulse";
+constexpr const char* kWaves = "Sine,Triangle,Saw,Square,Pulse,Wavetable";
+constexpr const char* kTables = "Basic Shapes,Kick Pulse,Harmonic Sweep,PWM,Hard Sync,Fold,Vowel,Growl"; // BassWavetable.h
 constexpr const char* kFilters = "LP12,LP24,HP12,BP";
 constexpr const char* kSync = "Free,1/1,1/2,1/4,1/8,1/16,1/4T,1/8T,1/16T";
 constexpr const char* kLfoShapes = "Sine,Triangle,Saw Up,Saw Down,Square,S&H,Smooth Random";
 constexpr const char* kSources = "None,LFO 1,LFO 2,LFO 3,LFO 4,Filter Env,Mod Env,Amp Env,Velocity,Note";
 constexpr const char* kDests = "None,Pitch,OSC A Pitch,OSC B Pitch,OSC C Pitch,OSC A Level,OSC B Level,OSC C Level,"
                                "OSC A Shape,OSC B Shape,OSC C Shape,OSC A PM,OSC B PM,OSC C PM,Cutoff A,Resonance A,"
-                               "Cutoff B,Drive,Detune,Noise,Sub,Width,Amp";
+                               "Cutoff B,Drive,Detune,Noise,Sub,Width,Amp,OSC A WT Pos,OSC B WT Pos,OSC C WT Pos";
 
 std::vector<AdvancedParam> makeParams()
 {
@@ -111,12 +112,18 @@ std::vector<AdvancedParam> makeParams()
                           [osc](S& s, float v) { osc(s).pmAmount = v; }));
         list.push_back(bo(id + "Audible", name + "Audible", [cosc](const S& s) { return cosc(s).audible ? 1.0f : 0.0f; },
                           [osc](S& s, float v) { osc(s).audible = v >= 0.5f; }));
+        list.push_back(ch(id + "Table", name + "Wavetable", kTables, [cosc](const S& s) { return static_cast<float>(cosc(s).table); },
+                          [osc](S& s, float v) { osc(s).table = asInt(v); }));
+        list.push_back(fl(id + "WtPos", name + "WT Position", 0, 1, 0, 0.001f, "", [cosc](const S& s) { return cosc(s).wtPos; },
+                          [osc](S& s, float v) { osc(s).wtPos = v; }));
     }
     list.push_back(bo("advSubOn", "Sub On", ADV_B(advSubOn)));
     list.push_back(ch("advSubWave", "Sub Wave", "Sine,Triangle", ADV_I(advSubWave)));
     list.push_back(fl("advSubOct", "Sub Octave", -2, 0, 0, 1, "oct", ADV_I(advSubOctave)));
     list.push_back(fl("advSubLevel", "Sub Level", -60, 6, 0, 0.1f, "dB", ADV_F(advSubLevelDb)));
     list.push_back(fl("advSubWarm", "Sub Warm", 0, 1, 0, 0.01f, "", ADV_F(advSubWarm)));
+    list.push_back(fl("advSubH3", "Sub 3rd Harmonic", 0, 1, 0, 0.001f, "", ADV_F(advSubH3)));
+    list.push_back(fl("advSubH5", "Sub 5th Harmonic", 0, 1, 0, 0.001f, "", ADV_F(advSubH5)));
     list.push_back(fl("advNoise", "Noise", -60, 0, 0, 0.1f, "dB", ADV_F(advNoiseDb)));
 
     list.push_back(ch("advFltAType", "Filter A Type", kFilters, ADV_I(advFilterAType)));
