@@ -76,6 +76,7 @@ if (BUILD_TESTING)
         Tests/Bass808OscBLab.cpp
         Tests/Bass808PresetsLab.cpp
         Tests/Bass808MemphisLab.cpp
+        Tests/Bass808Golden.cpp
     )
     target_include_directories(HPDG_Bass808Snapshot PRIVATE Source)
     target_link_libraries(HPDG_Bass808Snapshot
@@ -94,7 +95,10 @@ if (BUILD_TESTING)
         --osc-b "${CMAKE_BINARY_DIR}/checks/osc-b")
     add_test(NAME HPDG808_Memphis COMMAND HPDG_Bass808Snapshot --memphis-check)
     add_test(NAME HPDG808_Trio COMMAND HPDG_Bass808Snapshot --trio-check)
+    # Bass Architecture 2.0: the Classic sound of every preset stays bit-identical (Tests/golden/classic_v1.tsv)
+    add_test(NAME HPDG808_ClassicGolden COMMAND HPDG_Bass808Snapshot
+        --golden-check "${CMAKE_SOURCE_DIR}/Tests/golden/classic_v1.tsv")
     set_tests_properties(HPDG808_Memphis HPDG808_PresetBrowser HPDG808_DrawWave HPDG808_SynthTimeline
-        HPDG808_AutoGrid HPDG808_OscB PROPERTIES TIMEOUT 240)
+        HPDG808_AutoGrid HPDG808_OscB HPDG808_ClassicGolden PROPERTIES TIMEOUT 240)
 endif()
 

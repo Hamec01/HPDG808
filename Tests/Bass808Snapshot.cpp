@@ -16,6 +16,8 @@ using namespace bbg;
 int runBass808OscBLab(const juce::File& out);
 int runBass808MemphisLab();
 int runBass808PresetsLab(const juce::File& out);
+int writeGolden(const juce::File& file);
+int checkGolden(const juce::File& file);
 
 namespace
 {
@@ -662,6 +664,10 @@ int main(int argc, char* argv[])
         return checkFullReference(juce::File(juce::String(argv[2])), juce::File(juce::String(argv[3])));
     if (argc == 3 && juce::String(argv[1]) == "--auto-grid-check")
         return checkAutoGrid(juce::File(juce::String(argv[2])));
+    if (argc == 3 && juce::String(argv[1]) == "--golden-write")
+        return writeGolden(juce::File(juce::String(argv[2])));
+    if (argc == 3 && juce::String(argv[1]) == "--golden-check")
+        return checkGolden(juce::File(juce::String(argv[2])));
     if (argc == 2 && juce::String(argv[1]) == "--trio-check")
         return checkTrio();
     if (argc == 2 && juce::String(argv[1]) == "--memphis-check")
