@@ -39,6 +39,9 @@ struct BassPreset
 
 // 205 factory sounds by genre and substyle (tools/bass_presets.py; Source/Bass808/BassFactoryPresets.inc).
 const std::vector<BassPreset>& bassPresets();
+// How many of bassPresets() came after HPDG 808 1.1.0 (BassFactoryPresetsLater.inc, at its end): the plugin lists
+// them after its Trap / Drill voicings, so the released programme numbers stay.
+int laterBassPresetCount();
 // Removed factory sounds (BassRetiredPresets.inc): only to recognise unedited copies in saved projects.
 const std::vector<BassPreset>& retiredBassPresets();
 // Pure synth fits to the owner's LuxuryTrap one-shots; 0 Spinz, 1 Lex.

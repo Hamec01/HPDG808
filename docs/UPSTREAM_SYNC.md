@@ -33,3 +33,8 @@ ctest --test-dir build -C Release --output-on-failure
 The installer's version is read from `HPDG808_VERSION` in `CMakeLists.txt`.
 `dist/` holds the built installer and its SHA-256; `docs/hpdg808/` contains the matching guide,
 release notes, screenshots and website handoff.
+
+Ahead of that revision (2026-11-27, HPDG branch `claude/dnb-dancefloor-29b25a`): Bass Architecture 2.0 - the Advanced
+engine (`BassAdvanced.*`, `BassAdvancedParams.*`, parameters version 7), the Advanced Dancefloor Mid / Stab presets,
+`BassFactoryPresetsLater.inc` (sounds after the released programmes), the ADVANCED tab, the post-sum safety ceiling.
+This repository is now where `Source/Bass808/` is developed; HPDG holds an identical copy.

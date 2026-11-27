@@ -186,6 +186,7 @@ struct BassSettings
     float advMultibandMs = 30.0f;
     float advChorusMix = 0.0f, advChorusRateHz = 0.6f, advChorusDepth = 0.5f;
     float advWidth = 1.0f;        // 0 mono .. 2: the mids' side level
+    float advMonoHz = 0.0f;       // the mids' side under this is taken out (12 dB / oct): a mono low-mid; 0 off
     float advMidDb = 0.0f;        // the mids' level against the sub
 
     // play

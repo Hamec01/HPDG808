@@ -445,6 +445,7 @@ void MidFx::reset() noexcept
     bandGain.fill(1.0);
     bandStep.fill(0.0);
     bandCount = 0;
+    monoSide.fill({});
     std::fill(chorusL.begin(), chorusL.end(), 0.0f);
     std::fill(chorusR.begin(), chorusR.end(), 0.0f);
     chorusWrite = 0;
@@ -558,6 +559,24 @@ void MidFx::process(float* left, float* right, int n, const BassSettings& s) noe
             right[i] = static_cast<float>((1.0 - 0.5 * mix) * right[i] + 0.5 * mix * wetR);
             chorusWrite = (chorusWrite + 1) % size;
             chorusPhase = wrap(chorusPhase + dt);
+        }
+    }
+    if (s.advMonoHz > 1.0f)
+    {
+        // Mono Below: the side under the frequency goes (24 dB / octave), so the low mids stay in the middle as on the
+        // references (side - mid -19 dB at 120-500 Hz) whatever the unison spread
+        const double g = cutoffG(s.advMonoHz, sampleRate), k = std::sqrt(2.0);
+        for (int i = 0; i < n; ++i)
+        {
+            const double m = 0.5 * (left[i] + right[i]);
+            double x = 0.5 * (left[i] - right[i]), low = 0.0, band = 0.0, high = 0.0;
+            for (auto& stage : monoSide)
+            {
+                svfTick(x, g, k, stage.ic1, stage.ic2, low, band, high);
+                x = high;
+            }
+            left[i] = static_cast<float>(m + x);
+            right[i] = static_cast<float>(m - x);
         }
     }
 }

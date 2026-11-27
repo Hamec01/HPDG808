@@ -112,8 +112,25 @@ const std::vector<BassPreset>& bassPresets()
     static constexpr PresetRow rows[] {
 #include "BassFactoryPresets.inc"
     };
-    static const auto table = readPresets(rows);
+    static constexpr PresetRow later[] {
+#include "BassFactoryPresetsLater.inc"
+    };
+    static const auto table = []
+    {
+        auto list = readPresets(rows);
+        for (auto& preset : readPresets(later))
+            list.push_back(preset);
+        return list;
+    }();
     return table;
+}
+
+int laterBassPresetCount()
+{
+    static constexpr PresetRow later[] {
+#include "BassFactoryPresetsLater.inc"
+    };
+    return static_cast<int>(std::size(later));
 }
 
 const std::vector<BassPreset>& retiredBassPresets()
@@ -876,6 +893,7 @@ void BassEngine::prepare(double newSampleRate, int maxBlockSize)
     saturator.prepare(sampleRate);
     busGain = dbToGain(settings.gainDb);
     busFade = 0;
+    busLastOut = 0.0; // a fresh start: no glide from a previous sound's tail
     lfoBuffer.assign(static_cast<size_t>(chunkSize), 0.0f);
     advSub.assign(static_cast<size_t>(chunkSize), 0.0f);
     advLeft = advRight = advSub;

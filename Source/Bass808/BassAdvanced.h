@@ -121,6 +121,7 @@ private:
     std::array<std::array<Stage, 8>, 2> bands {};                // [channel][LR4 crossovers]
     std::array<double, 3> bandEnv {}, bandGain { 1.0, 1.0, 1.0 }, bandStep {};
     int bandCount = 0;
+    std::array<Stage, 2> monoSide {};                            // Mono Below: the side's high-pass (2 stages)
     std::vector<float> chorusL, chorusR;
     int chorusWrite = 0;
     double chorusPhase = 0.0;

@@ -184,6 +184,7 @@ std::vector<AdvancedParam> makeParams()
     list.push_back(fl("advChoRate", "Chorus Rate", 0.05f, 8, 0.6f, 0, "Hz", ADV_F(advChorusRateHz)));
     list.push_back(fl("advChoDepth", "Chorus Depth", 0, 1, 0, 0.01f, "", ADV_F(advChorusDepth)));
     list.push_back(fl("advWidth", "Mid Width", 0, 2, 0, 0.01f, "", ADV_F(advWidth)));
+    list.push_back(fl("advMonoHz", "Mono Below", 0, 600, 0, 1, "Hz", ADV_F(advMonoHz)));
     list.push_back(fl("advMidLevel", "Mid Level", -36, 12, 0, 0.1f, "dB", ADV_F(advMidDb)));
     return list;
 }

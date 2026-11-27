@@ -273,6 +273,10 @@ const std::vector<BassPreset>& Bass808Processor::programs()
             s.synthLevelDb = v.synthLevelDb;
             bank.push_back({ "Trap / Drill", v.name, s });
         }
+        // the sounds added after 1.1.0 go after the voicings (bassPresets() has them at its end)
+        const auto later = static_cast<std::ptrdiff_t>(laterBassPresetCount());
+        const auto firstVoicing = bank.end() - static_cast<std::ptrdiff_t>(std::size(voicings));
+        std::rotate(bank.begin() + (firstVoicing - bank.begin() - later), firstVoicing, bank.end());
         return bank;
     }();
     return presets;
@@ -687,6 +691,18 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
                 right[static_cast<size_t>(i)] += voice.right[static_cast<size_t>(i)] - voice.side[static_cast<size_t>(i)];
             }
         }
+    // the safety ceiling after the sum (Bass 2.0): an Advanced sound's stereo half comes after the master's LIMIT, and
+    // Trio's three sounds add up (in phase +9.5 dB). Under -1.9 dBFS nothing changes; above, a soft knee up to -0.2 dBFS.
+    // A Classic sound without Trio never reaches it (its output stays bit-identical).
+    if ((settings.engine == BassSettings::Advanced && settings.masterLimit) || trioOn)
+        for (auto* channel : { &left, &right })
+            for (int i = 0; i < numSamples; ++i)
+            {
+                auto& x = (*channel)[static_cast<size_t>(i)];
+                const float a = std::abs(x);
+                if (a > 0.8f)
+                    x = std::copysign(0.8f + 0.18f * std::tanh((a - 0.8f) / 0.18f), x);
+            }
 
     float peak = 0.0f;
     int write = scopeWrite.load(std::memory_order_relaxed);

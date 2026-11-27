@@ -159,13 +159,21 @@ int runBass808OscBLab(const juce::File& out)
     if (out.createDirectory().failed())
         return 1;
     Bass808Processor bass;
-    const int first = static_cast<int>(bassPresets().size());
-    if (bass.getNumPrograms() - first != 12 || !saveMidi(out.getChildFile("phrase-140.mid")))
+    // the released bank, its 12 Trap / Drill voicings, then the sounds added later (their programme numbers come last)
+    const int later = laterBassPresetCount();
+    const int first = static_cast<int>(bassPresets().size()) - later;
+    if (bass.getNumPrograms() - first - later != 12 || !saveMidi(out.getChildFile("phrase-140.mid")))
         return 1;
     bool ok = stateAndExport(out, first);
+    const auto bankName = [](int i)
+    {
+        return juce::String(bassPresets()[static_cast<size_t>(i)].genre) + " - " + bassPresets()[static_cast<size_t>(i)].name;
+    };
     for (int i = 0; i < first; ++i)
-        if (bass.getProgramName(i) != juce::String(bassPresets()[static_cast<size_t>(i)].genre) + " - "
-                                        + bassPresets()[static_cast<size_t>(i)].name)
+        if (bass.getProgramName(i) != bankName(i))
+            return 1;
+    for (int j = 0; j < later; ++j)
+        if (bass.getProgramName(first + 12 + j) != bankName(first + j))
             return 1;
 
     juce::String manifest("program\tname\n");
@@ -184,7 +192,7 @@ int runBass808OscBLab(const juce::File& out)
         }
         ok = BassExport::writeWav(out.getChildFile(name + ".wav"), audio, rate) && ok;
     };
-    for (int i = first; i < bass.getNumPrograms(); ++i)
+    for (int i = first; i < first + 12; ++i)
     {
         bass.applyPreset(i);
         manifest += juce::String(i) + "\t" + bass.getProgramName(i) + "\n";

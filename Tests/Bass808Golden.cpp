@@ -45,24 +45,32 @@ juce::StringArray renderAll()
     juce::StringArray rows;
     const auto engineRows = [&rows](const std::vector<BassPreset>& list, const char* bank)
     {
+        juce::StringArray seen; // a retired name can come twice (two retired revisions): the key counts it
         for (const auto& preset : list)
+        {
+            const juce::String name(preset.name);
+            const int revision = seen.indexOf(name) >= 0 ? [&] { int n = 0; for (const auto& s : seen) n += s == name ? 1 : 0; return n; }() : 0;
+            seen.add(name);
             for (const int note : { 36, 48 })
             {
                 Print print;
                 for (const float x : BassEngine::renderNote(preset.settings, nullptr, note, 1.0, 48000.0))
                     print.add(x);
-                rows.add(print.row(juce::String(bank) + "|engine|" + safe(preset.genre) + "|" + safe(preset.name) + "|" + juce::String(note)));
+                rows.add(print.row(juce::String(bank) + "|engine|" + safe(preset.genre) + "|" + safe(preset.name)
+                                   + (revision > 0 ? "#" + juce::String(revision + 1) : juce::String()) + "|" + juce::String(note)));
             }
+        }
     };
     engineRows(bassPresets(), "factory");
     engineRows(retiredBassPresets(), "retired");
 
-    // the plugin: its own programme list, 2 s phrase, 512-sample blocks
-    Bass808Processor bass;
-    bass.setPlayConfigDetails(0, 2, 48000.0, 512);
-    bass.prepareToPlay(48000.0, 512);
-    for (int program = 0; program < bass.getNumPrograms(); ++program)
+    // the plugin: its own programme list, 2 s phrase, 512-sample blocks; each programme in a fresh instance (its sound,
+    // not what the programme before it left in the processor)
+    const int programs = Bass808Processor().getNumPrograms();
+    for (int program = 0; program < programs; ++program)
     {
+        Bass808Processor bass;
+        bass.setPlayConfigDetails(0, 2, 48000.0, 512);
         bass.setCurrentProgram(program);
         bass.prepareToPlay(48000.0, 512);
         juce::AudioBuffer<float> buffer(2, 512);

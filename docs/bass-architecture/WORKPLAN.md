@@ -65,23 +65,23 @@ HPDG + HPDG808 as products. Learning material: 20 Dancefloor tutorials (transcri
 - [ ] 10 P1 report
 
 ### P2 Oscillators (Advanced engine)
-- [ ] generic osc ×3 (A/B/C): wave Sine/Tri/Saw/Square/Pulse(+Draw later); octave, semi, fine; level, pan; phase offset,
+- [x] generic osc ×3 (A/B/C): wave Sine/Tri/Saw/Square/Pulse(+Draw later); octave, semi, fine; level, pan; phase offset,
       random phase, retrigger/free; unison 1–7 (detune, spread, level compensation); shape/PW; on/off; modulation-only
-- [ ] PolyBLEP saw/pulse (exists: reuse `polyBlep`), triangle via integrated / BLAMP-lite
-- [ ] Sub: sine/tri, octave −2..0, level, mono, direct out (no mid FX), clean/warm
-- [ ] Noise (attack/texture): level, colour
-- [ ] Reese = template (2+ detuned saws) not a new wave
+- [x] PolyBLEP saw/pulse (exists: reuse `polyBlep`), triangle via integrated / BLAMP-lite
+- [x] Sub: sine/tri, octave −2..0, level, mono, direct out (no mid FX), clean/warm
+- [x] Noise (attack/texture): level (colour: via filters)
+- [x] Reese = template (2+ detuned saws) not a new wave
 - [ ] WT position over Draw Wave frames (later; reuse BassDrawWave band-limited tables)
 - [ ] gate: pitch, alias, L/R, mono loss renders; C off ≈ 0 CPU; demo patches (Clean Sub, Warm Sub, Soft/Wide Reese, Analog Round, Boom Bap, Hybrid 808)
 
 ### P3 Modulation & FX
-- [ ] envelopes: AMP ADSR, FILTER ENV, MOD ENV (keep 808 pitch punch)
-- [ ] 4 LFO: sine/tri/saw/square/S&H/random; free / tempo sync; retrigger; one-shot
-- [ ] mod matrix (8–16 slots): src (LFO1-4, ENV2, ENV3, velocity, note) → dst (osc pitch/level/shape/PM, cutoff, reso,
+- [x] envelopes: AMP ADSR, FILTER ENV, MOD ENV (keep 808 pitch punch)
+- [x] 4 LFO: sine/tri/saw/square/S&H/random; free / tempo sync; retrigger; one-shot
+- [x] mod matrix (8 slots, 16-sample control rate): src (LFO1-4, ENV2, ENV3, velocity, note) → dst (osc pitch/level/shape/PM, cutoff, reso,
       drive, unison detune, width, noise…), depth bipolar; pitch in st, cutoff in oct
-- [ ] PM: C→A/B, B→A (acyclic), ratio
-- [ ] filter A (+ optional B series/parallel): existing SVF types, drive pre, key, env
-- [ ] FX rack on mid: pre drive → filter → post drive (HamloMag) → low cut → multiband (own 3-band up/down, OTT-like)
+- [x] PM: C→A/B, B→A (acyclic), ratio
+- [x] filter A (+ optional B series/parallel): existing SVF types, drive pre, key, env
+- [x] FX rack on mid (fixed order: saturator → low cut → multiband → chorus; width in the voice): pre drive → filter → post drive (HamloMag) → low cut → multiband (own 3-band up/down, OTT-like)
       → chorus → width. Bypass/reorder click-free.
 - [ ] gate: Donk, Growl, Wobble, Acid, Reese sound like targets (A/B); no clicks; no-alloc + CPU suite
 
@@ -92,11 +92,28 @@ HPDG + HPDG808 as products. Learning material: 20 Dancefloor tutorials (transcri
 
 ### P5 Multi-Bass & integration
 - [ ] Trio → Single / Layer / Multi (+ Legacy Trio mapping); slots Bass 1–3 fully editable; note-off by owner ledger
-- [ ] gain staging + optional post-sum safety limiter (3 in-phase layers = +9.54 dB peak)
+- [x] gain staging + post-sum safety ceiling (Advanced + LIMIT, or Trio) (3 in-phase layers = +9.54 dB peak)
 - [ ] HPDG: Dancefloor Sub = foundation, Mid A = character, Mid B = answer (not mandatory); stems HPDG vs 808 consistent
 - [ ] FL Studio check: VST3, MIDI drag ch1–3, automation, reopen, offline render
 
-## Dancefloor-specific (from videos — fill after transcripts)
+## Measured (tools/bass_profile.py; quality-lab/bass-v2/dancefloor_reference_profile.json)
 
-- bass recipes: …
-- drums: …
+- 8 reference drops (16 drops, SCNet bass stems): 94 % of the bass energy under 100 Hz, peak band 40-50 Hz; mids
+  25-35 dB under the sub; side - mid: < 120 Hz -41 dB (mono), 120-500 -19, 500-2k -8, > 2k -6 dB (wide tops);
+  flatness 300 Hz-3 kHz 0.45 (gritty); the 150-1500 Hz level moves 7.3 dB (quarter / 8th: sidechain, gates).
+  References to their own mean: 8.7-16.4 (median 12.4).
+- HPDG round 4-5 three-bass sum (6 seeds): distance 36-48; mono (side -60 dB everywhere), flatness 0.003-0.13,
+  sub share 0.35-0.82: "уныло" in numbers.
+- Advanced fits (tools/bass_fit.py, sub at the note's octave): reese 6.4, wobble 5.3 (more average than any
+  reference: character from the recipes, the fit only puts it in the right region).
+
+## Dancefloor-specific (from the videos)
+
+- Sidechain bus: kick AND snare duck the basses (Kickstart 2 on kick + snare groups) -> HPDG mid lanes: snare duck.
+- Sub: a sine + a sine with the 3rd harmonic drawn (~71 %), EQ above; sub at ~-3 dB; the sub sits under each mid bass.
+- Mid basses: Serum presets + OTT, saturation, Pro-MB, EQ cutting the lows, G-Clip; "basic saw, -2 oct, 4 unison,
+  detune 0.2, blend 75, a filter, FX"; pitch-slide overlaps ("vroom").
+- Kanine: chug bass, brass stabs (Mid B = brass, not a pluck), Reese, a dotted-quarter bass, frequency shifter.
+- Mix: kick loudest (~0 dB), snare a little under, hats under that; the bass bus -2.8 dB under the drums; the main bass
+  ~0 dB into the bus, the support bass ~-6 dB; at most 4 bass elements.
+- Movement built into the patch (evolving while the note holds), 8th rhythm, call and response phrases.

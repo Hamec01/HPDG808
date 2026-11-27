@@ -259,22 +259,22 @@ factory|engine|DnB|Dancefloor - Sub Warm|36	c631c6f67e36566f	-12.180	-8.233
 factory|engine|DnB|Dancefloor - Sub Warm|48	e5faae7f88aaae60	-12.177	-8.256
 factory|engine|DnB|Dancefloor - Sub Legato|36	16cf972081e313ce	-12.020	-8.412
 factory|engine|DnB|Dancefloor - Sub Legato|48	bed771faaa741206	-12.007	-8.571
-factory|engine|DnB|Dancefloor - Mid Reese|36	fee90862654da21b	-14.991	-1.734
-factory|engine|DnB|Dancefloor - Mid Reese|48	19f3ffbd1f2dc7f5	-11.887	-0.763
-factory|engine|DnB|Dancefloor - Mid Wide Reese|36	39cc136bf8b62535	-15.510	-1.257
-factory|engine|DnB|Dancefloor - Mid Wide Reese|48	c4cc90d8dc34ba9b	-11.775	-0.499
-factory|engine|DnB|Dancefloor - Mid Acid|36	711215e6c6db9e34	-14.310	-2.394
-factory|engine|DnB|Dancefloor - Mid Acid|48	87fbcd58cac01c8	-12.405	-0.484
-factory|engine|DnB|Dancefloor - Mid Wobble|36	3355df899b5262a	-14.600	-2.752
-factory|engine|DnB|Dancefloor - Mid Wobble|48	1961ef897b8ab2a5	-11.293	-2.267
-factory|engine|DnB|Dancefloor - Stab Saw|36	d7aeb18b2cebb421	-14.899	-1.906
-factory|engine|DnB|Dancefloor - Stab Saw|48	32d6266b9b672beb	-12.389	-0.195
-factory|engine|DnB|Dancefloor - Stab Short|36	1155c363f5a6e92c	-15.030	-0.847
-factory|engine|DnB|Dancefloor - Stab Short|48	283c7f4d6003c8a1	-11.804	1.005
-factory|engine|DnB|Dancefloor - Stab Roll Pulse|36	20a62425e5ebb1c7	-15.541	-3.263
-factory|engine|DnB|Dancefloor - Stab Roll Pulse|48	6216dbeb6b998ea6	-13.606	-1.493
-factory|engine|DnB|Dancefloor - Stab Square|36	e6b4161aa1bebd6f	-16.866	-2.449
-factory|engine|DnB|Dancefloor - Stab Square|48	7550c33a2aef2a03	-12.351	0.608
+factory|engine|DnB|Dancefloor - Mid Reese|36	77019889a1f7276a	-28.364	-10.132
+factory|engine|DnB|Dancefloor - Mid Reese|48	9f7caf6d69522b2b	-26.952	-12.508
+factory|engine|DnB|Dancefloor - Mid Wide Reese|36	74141558c3b77211	-30.363	-13.371
+factory|engine|DnB|Dancefloor - Mid Wide Reese|48	2bbe07182e155e97	-28.672	-14.299
+factory|engine|DnB|Dancefloor - Mid Acid|36	d5f4ad790b000a7b	-29.418	-11.435
+factory|engine|DnB|Dancefloor - Mid Acid|48	96e613e532ee8d60	-27.672	-9.038
+factory|engine|DnB|Dancefloor - Mid Wobble|36	f7d96e4cd1a2ba1b	-26.875	-6.688
+factory|engine|DnB|Dancefloor - Mid Wobble|48	cb9fc6ab47e6899b	-25.620	-6.077
+factory|engine|DnB|Dancefloor - Stab Saw|36	b6f171f635732d63	-33.029	-16.232
+factory|engine|DnB|Dancefloor - Stab Saw|48	9bbd3aa4124ae02	-29.951	-11.162
+factory|engine|DnB|Dancefloor - Stab Short|36	1ec578d3eae8c62d	-33.350	-10.456
+factory|engine|DnB|Dancefloor - Stab Short|48	6109b1a1f48e801d	-32.657	-9.417
+factory|engine|DnB|Dancefloor - Stab Roll Pulse|36	5e9ddf4e30a65311	-32.909	-12.219
+factory|engine|DnB|Dancefloor - Stab Roll Pulse|48	5eead8ed5c2e8dd3	-30.549	-5.761
+factory|engine|DnB|Dancefloor - Stab Square|36	d97820278acaccd5	-30.521	-12.532
+factory|engine|DnB|Dancefloor - Stab Square|48	ad4cef56f37a6e38	-30.334	-4.727
 factory|engine|DnB|Roller - Dark Clean|36	cf8389631116fc40	-13.993	-0.954
 factory|engine|DnB|Roller - Dark Clean|48	cf833d00284618b2	-13.942	-0.914
 factory|engine|DnB|Roller - Long Dark|36	7652ece03762ce0b	-12.120	-6.778
@@ -409,6 +409,8 @@ factory|engine|Utility|Sub Wide|36	9b5b9b858fbb2241	-12.179	-8.708
 factory|engine|Utility|Sub Wide|48	d7d3deea238987f9	-12.164	-8.869
 factory|engine|Utility|808 Master|36	a2659cc65b574265	-18.132	-13.447
 factory|engine|Utility|808 Master|48	e298b9e5f183411b	-18.114	-13.318
+factory|engine|DnB|Dancefloor - Sub Heavy|36	24a6e8af05e0f12d	-6.780	-4.987
+factory|engine|DnB|Dancefloor - Sub Heavy|48	3a356f5d76e2a86f	-6.785	-4.987
 retired|engine|Trap|Memphis Trap - Warm Grit|36	457ffc769c535dcb	-12.820	-8.747
 retired|engine|Trap|Memphis Trap - Warm Grit|48	2df0fe6f84c3fedc	-12.852	-8.754
 retired|engine|Trap|Memphis Trap - Short Bright Grit|36	87921b390d3f9760	-13.262	-10.439
@@ -449,220 +451,237 @@ retired|engine|DnB|Dancefloor - Stab Roll Pulse|36	61671bb0fa343291	-19.561	-6.7
 retired|engine|DnB|Dancefloor - Stab Roll Pulse|48	e12f4da63ee505f6	-7.198	1.017
 retired|engine|DnB|Dancefloor - Stab Square|36	77ba3967652ef4c8	-20.301	-2.996
 retired|engine|DnB|Dancefloor - Stab Square|48	cd88d0e1f503f01	-14.915	-1.119
+retired|engine|DnB|Dancefloor - Mid Reese#2|36	fee90862654da21b	-14.991	-1.734
+retired|engine|DnB|Dancefloor - Mid Reese#2|48	19f3ffbd1f2dc7f5	-11.887	-0.763
+retired|engine|DnB|Dancefloor - Mid Wide Reese#2|36	39cc136bf8b62535	-15.510	-1.257
+retired|engine|DnB|Dancefloor - Mid Wide Reese#2|48	c4cc90d8dc34ba9b	-11.775	-0.499
+retired|engine|DnB|Dancefloor - Mid Acid#2|36	711215e6c6db9e34	-14.310	-2.394
+retired|engine|DnB|Dancefloor - Mid Acid#2|48	87fbcd58cac01c8	-12.405	-0.484
+retired|engine|DnB|Dancefloor - Mid Wobble#2|36	3355df899b5262a	-14.600	-2.752
+retired|engine|DnB|Dancefloor - Mid Wobble#2|48	1961ef897b8ab2a5	-11.293	-2.267
+retired|engine|DnB|Dancefloor - Stab Saw#2|36	d7aeb18b2cebb421	-14.899	-1.906
+retired|engine|DnB|Dancefloor - Stab Saw#2|48	32d6266b9b672beb	-12.389	-0.195
+retired|engine|DnB|Dancefloor - Stab Short#2|36	1155c363f5a6e92c	-15.030	-0.847
+retired|engine|DnB|Dancefloor - Stab Short#2|48	283c7f4d6003c8a1	-11.804	1.005
+retired|engine|DnB|Dancefloor - Stab Roll Pulse#2|36	20a62425e5ebb1c7	-15.541	-3.263
+retired|engine|DnB|Dancefloor - Stab Roll Pulse#2|48	6216dbeb6b998ea6	-13.606	-1.493
+retired|engine|DnB|Dancefloor - Stab Square#2|36	e6b4161aa1bebd6f	-16.866	-2.449
+retired|engine|DnB|Dancefloor - Stab Square#2|48	7550c33a2aef2a03	-12.351	0.608
 plugin|0|Boom Bap - Classic - Warm	3a45a7511c61fc8b	-13.172	-8.245
-plugin|1|Boom Bap - Classic - Warm 2	ab9931e458569413	-13.046	-7.158
-plugin|2|Boom Bap - Classic - Bright	986882aad9eb306f	-13.159	-8.309
-plugin|3|Boom Bap - Classic - Warm Clean	41ecc0d4f93aabbb	-13.266	-6.911
-plugin|4|Boom Bap - Classic - Warm 3	6dc524df8885329f	-13.216	-7.329
-plugin|5|Boom Bap - Classic - Long Warm	bf7d2ed15b504ceb	-13.222	-5.679
-plugin|6|Boom Bap - Classic - Warm Clean 2	fae99e31ec2aa59b	-13.321	-4.872
-plugin|7|Boom Bap - Classic - Warm Clean Punch	1249e18e60c1b83	-13.533	-2.630
-plugin|8|Boom Bap - Dusty - Dark	86c24df4be18926b	-13.043	-7.804
-plugin|9|Boom Bap - Dusty - Dark 2	8d329ee6ba6ebd6b	-13.155	-6.875
-plugin|10|Boom Bap - Dusty - Dark Clean	459f8e51e51d2d7	-13.095	-6.800
-plugin|11|Boom Bap - Dusty - Dark Grit Punch	d8c01cd08340d5cb	-13.221	-6.805
-plugin|12|Boom Bap - Dusty - Long Warm	9f9a8e4f23e2bd6f	-13.235	-5.741
-plugin|13|Boom Bap - Dusty - Dark Grit	cfda9f9593a74157	-13.163	-5.059
-plugin|14|Boom Bap - Dusty - Dark Clean Punch	7b25383bf6cab48f	-13.246	-7.881
-plugin|15|Boom Bap - Dusty - Long Dark Clean	a97be516ac2cfb6b	-13.095	-7.078
-plugin|16|Boom Bap - Jazzy - Warm Clean	3773c4138a97997b	-13.637	-3.313
-plugin|17|Boom Bap - Jazzy - Short Dark Clean	eb9a982cf1943907	-13.570	-5.119
-plugin|18|Boom Bap - Jazzy - Warm	9ae430ed8b277857	-13.335	-7.293
-plugin|19|Boom Bap - Jazzy - Warm Clean 2	9cf56a5418eaef0f	-13.386	-5.490
-plugin|20|Boom Bap - Jazzy - Dark Clean	8238471e147da453	-11.869	-4.470
-plugin|21|Boom Bap - Jazzy - Warm Clean 3	932e8cba0a78d8f7	-13.431	-4.974
-plugin|22|Boom Bap - Jazzy - Short Dark Clean 2	2085167d7582319b	-13.476	-5.369
-plugin|23|Boom Bap - Jazzy - Short Warm Clean	bcc7e080b9e4e5ef	-13.491	-3.778
-plugin|24|Boom Bap - Boom Bap Gold - Long Warm	e8445410c23ea987	-13.024	-8.433
-plugin|25|Boom Bap - Boom Bap Gold - Warm Clean	da3bd02917d65bc7	-11.728	-5.510
-plugin|26|Boom Bap - Boom Bap Gold - Long Warm 2	493fd06fa31bab3f	-13.230	-5.503
-plugin|27|Boom Bap - Boom Bap Gold - Long Warm Dirty	95491ad186b2e2e7	-13.030	-7.332
-plugin|28|Boom Bap - Boom Bap Gold - Bright	a5a8e5aa81fd9d3	-13.167	-7.184
-plugin|29|Boom Bap - Boom Bap Gold - Long Dark	b36932c9076ae2fb	-13.237	-3.482
-plugin|30|Boom Bap - Boom Bap Gold - Long Dark 2	88c2eb1de33656bb	-13.283	-7.444
-plugin|31|Boom Bap - Boom Bap Gold - Warm	6dc94b24667efd47	-13.414	-6.568
-plugin|32|Boom Bap - Underground - Long Dark Grit	d4d4d76ff1d3156b	-12.929	-4.916
-plugin|33|Boom Bap - Underground - Long Dark	d8e7d553dd6bc1b7	-13.052	-5.433
-plugin|34|Boom Bap - Underground - Warm Grit	21e07559a6eaaa3	-13.094	-5.650
-plugin|35|Boom Bap - Underground - Warm Grit Punch	6b3afcdbc1e16b8b	-13.114	-6.181
-plugin|36|Boom Bap - Underground - Dark Grit Punch	cdc2e7b08629904b	-13.253	-6.800
-plugin|37|Boom Bap - Underground - Long Warm Grit	8839912f9039b1c7	-13.389	-6.013
-plugin|38|Boom Bap - Underground - Dark Punch	a35727129501c137	-13.132	-6.319
-plugin|39|Boom Bap - Underground - Long Warm Dirty	aab8490d575e1ce7	-13.331	-3.760
-plugin|40|Boom Bap - Lofi Rap - Long Bright Clean	61c9ab3953529b4b	-12.965	-6.310
-plugin|41|Boom Bap - Lofi Rap - Long Warm Clean	a4241ae209c32e23	-13.128	-4.437
-plugin|42|Boom Bap - Lofi Rap - Warm Grit	6f992c7adc9c5717	-13.663	-7.902
-plugin|43|Boom Bap - Lofi Rap - Long Dark Clean	da57d222d8615a03	-17.576	-9.734
-plugin|44|Boom Bap - Lofi Rap - Short Bright Grit	56a0178dabda4db7	-12.998	-6.270
-plugin|45|Boom Bap - Lofi Rap - Long Dark Dirty	370b29eefdf13753	-13.216	-5.432
-plugin|46|Boom Bap - Lofi Rap - Short Bright Clean	f5158d3c0548b6e7	-13.071	-4.785
-plugin|47|Boom Bap - Lofi Rap - Bright	33ebc2da8200c6a7	-13.270	-7.430
-plugin|48|Trap - ATL Classic - Warm	2418b4d51d0abb38	-14.129	-5.192
-plugin|49|Trap - ATL Classic - Warm 2	beeb6b3b6fcc0c64	-13.354	-6.198
-plugin|50|Trap - ATL Classic - Long Bright	96df36188f0196f7	-11.398	-5.373
-plugin|51|Trap - ATL Classic - Warm 3	11520268840e7bd1	-14.033	-3.106
-plugin|52|Trap - ATL Classic - Short Warm Clean	7bce716bcd6942f1	-14.940	-3.995
-plugin|53|Trap - ATL Classic - Bright Clean	797534d85b084363	-13.942	-5.893
-plugin|54|Trap - ATL Classic - Long Warm Punch	c0274be8106a24cb	-13.865	-4.393
-plugin|55|Trap - ATL Classic - Long Bright Clean	73186d22d306d7c9	-13.338	-7.087
-plugin|56|Trap - Dark Trap - Long Dark	462e6ddb8816c652	-13.732	-6.633
-plugin|57|Trap - Dark Trap - Long Dark Grit	4e62f99c7bedd1b7	-13.204	-6.171
-plugin|58|Trap - Dark Trap - Long Warm Grit	a3d0c548b9901b96	-13.827	-3.991
-plugin|59|Trap - Dark Trap - Dark	112055d422db7cdf	-16.079	-3.211
-plugin|60|Trap - Dark Trap - Long Dark Clean	3675b41d18032e0e	-13.067	-5.399
-plugin|61|Trap - Dark Trap - Long Dark 2	46af57714c8c2481	-13.009	-7.291
-plugin|62|Trap - Dark Trap - Long Warm	330bc1f5451f5aa0	-13.388	-5.496
-plugin|63|Trap - Dark Trap - Warm	b1dbae664239f89b	-13.971	-5.908
-plugin|64|Trap - Cloud Trap - Long Warm Clean	c084f425406bd43a	-13.096	-6.123
-plugin|65|Trap - Cloud Trap - Long Dark	aa2979144e7fe4da	-12.908	-6.510
-plugin|66|Trap - Cloud Trap - Long Warm Clean 2	405f04c5234c6337	-13.121	-7.475
-plugin|67|Trap - Cloud Trap - Warm Clean	235a99242aa3c9ba	-14.087	-5.212
-plugin|68|Trap - Cloud Trap - Long Warm	7c4826075bbd7276	-13.328	-8.131
-plugin|69|Trap - Cloud Trap - Long Warm 2	75e83c28cb97f399	-12.810	-4.869
-plugin|70|Trap - Cloud Trap - Dark Clean	f36b681fd22cd6c5	-13.490	-3.403
-plugin|71|Trap - Cloud Trap - Long Warm Clean 3	2d2a15a335a96bf8	-13.095	-4.649
-plugin|72|Trap - Rage Trap - Bright Grit Punch	7cded1f14664feb8	-13.532	-5.535
-plugin|73|Trap - Rage Trap - Bright	8ec9b0b6c9c3069a	-14.037	-6.169
-plugin|74|Trap - Rage Trap - Bright Dirty	a650ea33d9d77166	-18.037	-9.632
-plugin|75|Trap - Rage Trap - Long Bright Punch	ebe191ebc9b17cf0	-13.103	-6.971
-plugin|76|Trap - Rage Trap - Warm Dirty	399efe0e254f9e45	-14.433	-6.538
-plugin|77|Trap - Rage Trap - Short Bright	62c383eba0fff2f2	-14.274	-1.330
-plugin|78|Trap - Rage Trap - Warm	8d34202f3f7d4d74	-13.418	-5.758
-plugin|79|Trap - Rage Trap - Short Warm Grit	29d26d5e1a6218dd	-13.810	-5.774
-plugin|80|Trap - Memphis Trap - M808 Core	a7f816105d6d2737	-10.339	-4.245
-plugin|81|Trap - Memphis Trap - M808 Tight	7ccd9623056286df	-16.179	-5.284
-plugin|82|Trap - Memphis Trap - M808 Dark Long	cb9d4f304550f7c3	-9.635	-4.492
-plugin|83|Trap - Memphis Trap - M808 Bounce	e6bca2371593e4e3	-11.139	-3.858
-plugin|84|Trap - Memphis Trap - M808 Hard	ec2232d58ddb3b5b	-10.103	-3.272
-plugin|85|Trap - Memphis Trap - M808 Vintage	959372d18ea1cef3	-11.328	-4.666
-plugin|86|Trap - Luxury Trap - Long Warm Clean	515f380302ea15a1	-13.134	-8.525
-plugin|87|Trap - Luxury Trap - Warm Clean	ac66b9bedacdc1cb	-13.870	-7.168
-plugin|88|Trap - Luxury Trap - Long Bright Clean	469e3e3189385670	-13.050	-7.737
-plugin|89|Trap - Luxury Trap - Warm Clean 2	7c0b33ce094264ad	-13.503	-7.083
-plugin|90|Trap - Luxury Trap - Warm	a7004464d2ac74f8	-13.730	-6.189
-plugin|91|Trap - Luxury Trap - Long Warm	bb82e37b3f67b92	-12.975	-2.570
-plugin|92|Trap - Luxury Trap - Spinz	d3f2c55ffcbd13fc	-13.752	-1.112
-plugin|93|Trap - Luxury Trap - Lex	f728e8a2c00c3300	-14.156	-5.460
-plugin|94|Rap - East Coast - Warm Clean	c0bed467d353377b	-12.302	-6.394
-plugin|95|Rap - East Coast - Long Dark Grit	683b0e8adc716959	-14.116	-7.918
-plugin|96|Rap - East Coast - Long Bright Clean	bc5bc81be666851	-13.480	-4.588
-plugin|97|Rap - West Coast - Long Warm Clean	96663ad77a483a61	-13.329	-5.599
-plugin|98|Rap - West Coast - Warm Clean	d2d1a6e52df5548e	-14.231	-6.343
-plugin|99|Rap - West Coast - Long Warm	5d654713de4049a2	-13.258	-6.376
-plugin|100|Rap - Dirty South - Long Dark Grit	f3bbd3c8f1cb312f	-12.998	-6.739
-plugin|101|Rap - Dirty South - Long Warm	b07fe903d2614507	-13.041	-4.142
-plugin|102|Rap - Dirty South - Long Warm Dirty	a677e7489999e0e	-12.887	-6.193
-plugin|103|Rap - German Street - Long Bright Dirty	60e03fb8548b69fd	-13.315	-6.779
-plugin|104|Rap - German Street - Long Warm Dirty	8afaf4128588fc42	-13.221	-5.634
-plugin|105|Rap - German Street - Bright	c6e45f968e8123e5	-13.587	-6.867
-plugin|106|Rap - Russian Rap - Long Dark	9a6c5824a9d04f0d	-13.030	-7.064
-plugin|107|Rap - Russian Rap - Long Warm Grit	9eebcccc97c4d6f4	-13.264	-5.464
-plugin|108|Rap - Russian Rap - Long Warm	b70b67462292440	-13.147	-5.240
-plugin|109|Rap - RnB Rap - Warm Clean	efad6780136a89e2	-13.154	-6.230
-plugin|110|Rap - RnB Rap - Long Dark Clean	4fdab06cf4286c86	-13.082	-7.784
-plugin|111|Rap - RnB Rap - Dark Clean	d8edbba83ef80767	-14.939	-3.880
-plugin|112|Rap - Hardcore Rap - Bright Punch	3f52672a23e84342	-13.546	-6.418
-plugin|113|Rap - Hardcore Rap - Long Bright Dirty	bc6f84757a82ef3c	-17.139	-10.304
-plugin|114|Rap - Hardcore Rap - Dark Dirty Punch	10f8bb11660f36b8	-13.015	-7.825
-plugin|115|Drill - Drill - Long Warm	f0b16b93f365733	-12.923	-6.280
-plugin|116|Drill - Drill - Long Warm Grit	115bbe54dc82193b	-13.822	-6.252
-plugin|117|Drill - Drill - Long Bright	8bdd71e5f2916279	-13.386	-5.660
-plugin|118|Drill - Drill - Long Dark Grit	f405c2cb1c97020	-12.925	-6.744
-plugin|119|Drill - Drill - Long Warm Punch	bdcd7adea0cad39f	-13.161	-8.385
-plugin|120|Drill - Drill - Long Bright 2	b922083f673200db	-12.827	-7.560
-plugin|121|Drill - Drill - Warm Clean	f3c646445e11f73c	-14.822	-4.727
-plugin|122|Drill - Drill - Long Warm Clean	1954ce3e52f9383a	-12.968	-7.919
-plugin|123|Drill - Drill - Warm Clean 2	703069a1d3ce1582	-13.340	-5.513
-plugin|124|Drill - Drill - Long Bright Punch	1c583efcff60b094	-12.761	-6.141
-plugin|125|Drill - Drill - Bright	5b6779b8110c0eea	-13.763	-6.040
-plugin|126|Drill - Drill - Warm Grit	2aa3860943cc300e	-13.902	-7.832
-plugin|127|DnB - Dancefloor - Sub Clean	207c047c06866d77	-13.074	-3.828
-plugin|128|DnB - Dancefloor - Sub Warm	3e617a44ec202f2f	-13.162	-8.438
-plugin|129|DnB - Dancefloor - Sub Legato	86c19d05b8f472df	-13.165	-8.571
-plugin|130|DnB - Dancefloor - Mid Reese	84f496e37113e01a	-13.642	-0.338
-plugin|131|DnB - Dancefloor - Mid Wide Reese	9bf0e33cfd039797	-13.494	-0.008
-plugin|132|DnB - Dancefloor - Mid Acid	494c536f598dfa0a	-14.359	-1.152
-plugin|133|DnB - Dancefloor - Mid Wobble	6749333d991d18c7	-13.194	-1.995
-plugin|134|DnB - Dancefloor - Stab Saw	8b4020e948ab0224	-14.431	-0.737
-plugin|135|DnB - Dancefloor - Stab Short	4b38559b375752d1	-13.314	-0.472
-plugin|136|DnB - Dancefloor - Stab Roll Pulse	b69fb71f07d40b7a	-15.222	-1.792
-plugin|137|DnB - Dancefloor - Stab Square	12aaa4c76dcfbc7f	-14.724	-1.216
-plugin|138|DnB - Roller - Dark Clean	bc22a52dc2cb2d5f	-14.561	-1.087
-plugin|139|DnB - Roller - Long Dark	b443fba632a92783	-13.012	-4.879
-plugin|140|DnB - Roller - Dark Clean 2	881632fbe56920ad	-13.923	-0.722
-plugin|141|DnB - Roller - Long Dark Grit	35e4210fe1b4f548	-13.359	-6.297
-plugin|142|DnB - Liquid - Long Warm Clean	34c2684a28dcb750	-12.838	-7.145
-plugin|143|DnB - Liquid - Warm Clean	1143360a2b0e11c0	-15.112	-3.186
-plugin|144|DnB - Liquid - Long Dark	8f88213e2e35fbe6	-13.194	-7.103
-plugin|145|DnB - Liquid - Long Bright Clean	4e73251c7a090a2d	-13.797	-5.294
-plugin|146|DnB - Neurofunk - Warm Grit	da62a9b1788c6897	-15.115	-3.176
-plugin|147|DnB - Neurofunk - Bright	6568ea5505133ec5	-15.252	-4.047
-plugin|148|DnB - Neurofunk - Short Bright Dirty	1e2f17d4aea18fd2	-15.060	-3.166
-plugin|149|DnB - Neurofunk - Long Warm Dirty	687dae0709db5361	-13.167	-5.428
-plugin|150|DnB - Jump-Up - Bright Grit Punch	eb45c8cfebe0e949	-15.139	-5.889
-plugin|151|DnB - Jump-Up - Bright	546f9073de76a24	-14.601	-2.068
-plugin|152|DnB - Jump-Up - Warm Grit Punch	76bcae1588d6cf15	-14.868	-0.522
-plugin|153|DnB - Jump-Up - Bright Dirty	5aa73211161665a6	-21.583	-6.328
-plugin|154|DnB - Breakbeat - Short Warm Clean	6704af3029e9e9eb	-15.199	-0.816
-plugin|155|DnB - Breakbeat - Warm Clean	65ef45ff00f2795f	-13.569	-1.602
-plugin|156|DnB - Breakbeat - Short Warm Clean 2	b3222428634923c7	-15.032	-0.696
-plugin|157|DnB - Breakbeat - Short Warm Clean 3	2d02e458927d0c46	-15.042	-3.028
-plugin|158|Techno - Peak Time - Bright Punch	530d7c272e278e9d	-13.385	-5.272
-plugin|159|Techno - Peak Time - Bright Punch 2	787d14e98b0f0578	-18.220	-3.392
-plugin|160|Techno - Peak Time - Short Warm Punch	69ad37745ef523cf	-13.424	-2.736
-plugin|161|Techno - Peak Time - Dark Grit	b5ae7ddab781d184	-14.243	-2.850
-plugin|162|Techno - Hypnotic - Warm Clean	1e8954ed9f7f76c7	-14.147	-1.127
-plugin|163|Techno - Hypnotic - Short Dark	c8c71a9406a7af9b	-13.227	-3.271
-plugin|164|Techno - Hypnotic - Warm Clean 2	5719958e8b01b0e7	-13.479	-4.298
-plugin|165|Techno - Hypnotic - Long Bright Clean	80cc173913e73af	-13.294	-4.423
-plugin|166|Techno - Minimal - Short Dark Clean	49171d46a7aba6a7	-13.554	-2.943
-plugin|167|Techno - Minimal - Short Warm Clean	ba34bc71fed8c4a8	-13.492	-0.786
-plugin|168|Techno - Minimal - Dark Clean Punch	224207697e599202	-13.355	-3.822
-plugin|169|Techno - Minimal - Short Dark Clean 2	1074555483bccdd3	-13.575	-2.828
-plugin|170|Techno - Detroit - Bright Clean	984310e54bed1981	-13.461	-4.155
-plugin|171|Techno - Detroit - Bright	b131d450b1843872	-12.769	-5.542
-plugin|172|Techno - Detroit - Warm	fcb54fd15c1228b7	-13.612	-4.220
-plugin|173|Techno - Detroit - Warm Clean	e351f1c4c4e9a0df	-13.303	-5.891
-plugin|174|Techno - Dub - Long Dark Clean	5c527352077e6f48	-12.867	-4.191
-plugin|175|Techno - Dub - Long Dark	24f015f749a94eb	-19.373	-5.203
-plugin|176|Techno - Dub - Long Dark 2	669be980befbf3d9	-13.034	-5.670
-plugin|177|Techno - Dub - Dark	5072fc7bbae4e388	-13.449	-2.399
-plugin|178|Techno - Acid - Bright	b19271868e865b97	-13.180	-1.380
-plugin|179|Techno - Acid - Warm Grit	a418ed11f1b268ea	-18.785	-5.400
-plugin|180|Techno - Acid - Bright 2	6a629db8f118a570	-13.380	-0.392
-plugin|181|Techno - Acid - Long Bright	b67ceca4d55f9196	-12.907	-6.954
-plugin|182|Techno - Hard - Bright Grit Punch	27c90c9d77dd371f	-20.877	-2.470
-plugin|183|Techno - Hard - Warm Dirty Punch	8b9efe0d6768af0c	-17.141	-6.747
-plugin|184|Techno - Hard - Short Bright Punch	f5eefaaa6755939e	-12.920	-0.693
-plugin|185|Techno - Hard - Bright Dirty	383e70916c7db9da	-13.996	-1.774
-plugin|186|Atmospheric - Pulse - Warm	b172f3693585ec57	-12.457	-5.298
-plugin|187|Atmospheric - Pulse - Warm Clean	eb37df71d8888bed	-12.624	-5.453
-plugin|188|Atmospheric - Pulse - Warm Clean Punch	d8b0a32e028a29cd	-12.496	-5.554
-plugin|189|Atmospheric - Pulse - Warm 2	897c66cb447fdeaa	-12.885	-4.278
-plugin|190|Atmospheric - Pulse - Warm Punch	90341118fb42e157	-12.505	-5.985
-plugin|191|Atmospheric - Two-Step - Warm	b480620e2697afba	-12.557	-3.917
-plugin|192|Atmospheric - Two-Step - Warm 2	8135b4575519cd8d	-13.409	-2.955
-plugin|193|Atmospheric - Two-Step - Dark Grit	a0e76330a1b63e37	-12.622	-5.157
-plugin|194|Atmospheric - Two-Step - Warm Clean Punch	7e48d4303a404cd3	-12.623	-6.006
-plugin|195|Atmospheric - Two-Step - Warm 3	6ae9c5d6a48ab23c	-12.540	-2.906
-plugin|196|Atmospheric - Broken - Short Warm	7e640257dfb4096d	-12.924	-3.944
-plugin|197|Atmospheric - Broken - Short Bright Clean	6d9e742a02e05d7b	-14.463	-5.521
-plugin|198|Atmospheric - Broken - Bright Dirty	2ec848b0c568f3f	-12.976	-6.190
-plugin|199|Atmospheric - Broken - Bright	6d7fd38ca4a663f9	-13.137	-4.587
-plugin|200|Atmospheric - Broken - Warm Clean	e2b7462b89737a27	-11.459	-3.545
-plugin|201|Utility - Sub	c3dcbd4e3f54d947	-13.189	-6.790
-plugin|202|Utility - Sub Warm	b5bf50df0e06c9f	-13.299	-7.974
-plugin|203|Utility - Sub Wide	dc60bfc758fe4755	-12.948	-5.766
-plugin|204|Utility - 808 Master	3d0fd3af7ba38573	-14.903	-6.021
-plugin|205|Trap / Drill - Clean - Still Air	55ae3303fafb622b	-10.814	-4.383
-plugin|206|Trap / Drill - Clean - Warm Floor	f2be83b9ce99e003	-13.014	-5.964
-plugin|207|Trap / Drill - Clean - Soft Bloom	658ab0f2bed0ce2f	-12.335	-6.303
-plugin|208|Trap / Drill - Punch - Knock	9eda8e6707aa79a3	-17.316	-5.939
-plugin|209|Trap / Drill - Punch - Thud	5b12c485cbbac003	-14.810	-6.577
-plugin|210|Trap / Drill - Punch - Snap	46c79b2237a96d77	-24.145	-8.572
-plugin|211|Trap / Drill - Grit - Burnt Edge	1611aed42bf73977	-16.857	-9.478
-plugin|212|Trap / Drill - Grit - Iron Bark	b44272c0ae4a4aa3	-21.047	-9.835
-plugin|213|Trap / Drill - Grit - Black Coil	26128917af9744cb	-15.309	-9.203
-plugin|214|Trap / Drill - Slide - Low Rail	2ecbae669508ee0f	-11.189	-5.188
-plugin|215|Trap / Drill - Slide - Wire	65ad733915805327	-13.722	-6.970
-plugin|216|Trap / Drill - Slide - Bent Steel	3eb3dbbabf59a207	-15.426	-8.473
+plugin|1|Boom Bap - Classic - Warm 2	b5384b5e7583612f	-13.018	-5.703
+plugin|2|Boom Bap - Classic - Bright	253eab706c135ab7	-13.121	-6.484
+plugin|3|Boom Bap - Classic - Warm Clean	89865bf5738e82c7	-13.245	-6.880
+plugin|4|Boom Bap - Classic - Warm 3	d1d215d06300cfbf	-13.195	-7.328
+plugin|5|Boom Bap - Classic - Long Warm	4def4a0ef2a7853	-13.221	-5.679
+plugin|6|Boom Bap - Classic - Warm Clean 2	ace5526cc99775e7	-13.361	-4.933
+plugin|7|Boom Bap - Classic - Warm Clean Punch	277feb6934246f77	-13.531	-2.570
+plugin|8|Boom Bap - Dusty - Dark	5622c3bd2ba946af	-13.043	-7.804
+plugin|9|Boom Bap - Dusty - Dark 2	693cc609299ef24f	-13.145	-6.736
+plugin|10|Boom Bap - Dusty - Dark Clean	c17c122840381897	-13.076	-5.247
+plugin|11|Boom Bap - Dusty - Dark Grit Punch	5fa9dca13b9bc547	-13.215	-6.805
+plugin|12|Boom Bap - Dusty - Long Warm	25b975f4cf48d45b	-13.232	-5.706
+plugin|13|Boom Bap - Dusty - Dark Grit	9ed1b1cbdc7cda87	-13.173	-5.452
+plugin|14|Boom Bap - Dusty - Dark Clean Punch	cf0366a1e70a991b	-13.242	-7.881
+plugin|15|Boom Bap - Dusty - Long Dark Clean	663589442f4d2d37	-13.093	-7.032
+plugin|16|Boom Bap - Jazzy - Warm Clean	5dec9feab171c363	-13.632	-3.313
+plugin|17|Boom Bap - Jazzy - Short Dark Clean	9ca2753da6c66273	-13.568	-5.119
+plugin|18|Boom Bap - Jazzy - Warm	5f04c24983f0804f	-13.338	-7.310
+plugin|19|Boom Bap - Jazzy - Warm Clean 2	4312af553266f723	-13.363	-5.490
+plugin|20|Boom Bap - Jazzy - Dark Clean	469ce3eaea9f7f1b	-11.853	-4.470
+plugin|21|Boom Bap - Jazzy - Warm Clean 3	54700b0bf8aa8453	-13.439	-5.446
+plugin|22|Boom Bap - Jazzy - Short Dark Clean 2	767ad0b22f1371c7	-13.472	-5.369
+plugin|23|Boom Bap - Jazzy - Short Warm Clean	f29626087926887	-13.497	-3.778
+plugin|24|Boom Bap - Boom Bap Gold - Long Warm	bb4e794d970d7fab	-13.019	-8.066
+plugin|25|Boom Bap - Boom Bap Gold - Warm Clean	4c4a14dc2813553	-11.720	-5.509
+plugin|26|Boom Bap - Boom Bap Gold - Long Warm 2	fc694c7906805b37	-13.233	-5.565
+plugin|27|Boom Bap - Boom Bap Gold - Long Warm Dirty	9fe165a8d1934d0f	-13.033	-7.332
+plugin|28|Boom Bap - Boom Bap Gold - Bright	2ba737e5e43b62cf	-13.169	-7.184
+plugin|29|Boom Bap - Boom Bap Gold - Long Dark	f59b54efad1a059f	-13.235	-3.482
+plugin|30|Boom Bap - Boom Bap Gold - Long Dark 2	d09cfd2d442168f	-13.298	-7.444
+plugin|31|Boom Bap - Boom Bap Gold - Warm	12fbdf020457ddd7	-13.412	-6.567
+plugin|32|Boom Bap - Underground - Long Dark Grit	acd2e2c636a9cc13	-12.939	-4.916
+plugin|33|Boom Bap - Underground - Long Dark	f3227d2a6b7ff0b	-13.096	-6.713
+plugin|34|Boom Bap - Underground - Warm Grit	140d5805638b73f7	-13.056	-4.276
+plugin|35|Boom Bap - Underground - Warm Grit Punch	2d3e2846528b987b	-13.100	-6.181
+plugin|36|Boom Bap - Underground - Dark Grit Punch	252d4e91f918f303	-13.229	-6.797
+plugin|37|Boom Bap - Underground - Long Warm Grit	c847bce125c1a837	-13.372	-6.013
+plugin|38|Boom Bap - Underground - Dark Punch	1c7ad220f7713b	-13.130	-6.319
+plugin|39|Boom Bap - Underground - Long Warm Dirty	ed2a80118f1b5327	-13.319	-3.760
+plugin|40|Boom Bap - Lofi Rap - Long Bright Clean	dd07faa64ff8f157	-12.967	-6.354
+plugin|41|Boom Bap - Lofi Rap - Long Warm Clean	8ee9897c2da1753f	-13.115	-4.437
+plugin|42|Boom Bap - Lofi Rap - Warm Grit	c8cd9342feb0900f	-13.664	-7.902
+plugin|43|Boom Bap - Lofi Rap - Long Dark Clean	646ff0016040a273	-17.580	-9.734
+plugin|44|Boom Bap - Lofi Rap - Short Bright Grit	efc88b429092fadb	-13.014	-6.270
+plugin|45|Boom Bap - Lofi Rap - Long Dark Dirty	3bd6dcffe1f93657	-13.198	-5.432
+plugin|46|Boom Bap - Lofi Rap - Short Bright Clean	524952ee5479b667	-13.058	-4.277
+plugin|47|Boom Bap - Lofi Rap - Bright	803191332c66ad5f	-13.252	-6.885
+plugin|48|Trap - ATL Classic - Warm	6d3e436e85a2a569	-14.098	-5.192
+plugin|49|Trap - ATL Classic - Warm 2	33ed8998bfeb1db5	-13.351	-6.198
+plugin|50|Trap - ATL Classic - Long Bright	cceadd1a918d1002	-11.404	-5.373
+plugin|51|Trap - ATL Classic - Warm 3	7d5be45bf2bf9541	-14.025	-3.106
+plugin|52|Trap - ATL Classic - Short Warm Clean	a1584ba56e3421e	-14.954	-3.995
+plugin|53|Trap - ATL Classic - Bright Clean	11338be09a524988	-13.939	-5.893
+plugin|54|Trap - ATL Classic - Long Warm Punch	ae9477bf812c54d7	-13.898	-5.176
+plugin|55|Trap - ATL Classic - Long Bright Clean	54f8d07b290c409e	-13.345	-7.087
+plugin|56|Trap - Dark Trap - Long Dark	75e1ac7695dd6d61	-13.708	-6.633
+plugin|57|Trap - Dark Trap - Long Dark Grit	a297596e444781e	-13.194	-6.056
+plugin|58|Trap - Dark Trap - Long Warm Grit	d932683811e16452	-13.865	-5.772
+plugin|59|Trap - Dark Trap - Dark	47ebb904e8a26397	-16.102	-3.217
+plugin|60|Trap - Dark Trap - Long Dark Clean	ed2b488c6bcde6e7	-13.112	-7.090
+plugin|61|Trap - Dark Trap - Long Dark 2	28e39578681d7291	-12.999	-7.291
+plugin|62|Trap - Dark Trap - Long Warm	a859fc606ca82adf	-13.392	-5.496
+plugin|63|Trap - Dark Trap - Warm	9924ba1675bdcd1d	-13.974	-5.998
+plugin|64|Trap - Cloud Trap - Long Warm Clean	118b21063b307ed3	-13.067	-4.606
+plugin|65|Trap - Cloud Trap - Long Dark	9db574394097f39d	-12.893	-6.510
+plugin|66|Trap - Cloud Trap - Long Warm Clean 2	19fd28be9e6cb238	-13.101	-6.659
+plugin|67|Trap - Cloud Trap - Warm Clean	1bc61c83fd707f8e	-14.015	-3.889
+plugin|68|Trap - Cloud Trap - Long Warm	59b4fa754ca84cf8	-13.324	-8.131
+plugin|69|Trap - Cloud Trap - Long Warm 2	f5f1deb1ea0603f2	-12.793	-4.138
+plugin|70|Trap - Cloud Trap - Dark Clean	2e1249701194f7d5	-13.476	-3.403
+plugin|71|Trap - Cloud Trap - Long Warm Clean 3	22ffcb4d90cb17d8	-13.128	-5.722
+plugin|72|Trap - Rage Trap - Bright Grit Punch	6ba2e163e440fd80	-13.492	-5.418
+plugin|73|Trap - Rage Trap - Bright	dc9614fe442d1cae	-14.014	-5.580
+plugin|74|Trap - Rage Trap - Bright Dirty	1608db75f04620b4	-18.036	-9.610
+plugin|75|Trap - Rage Trap - Long Bright Punch	a28fba6c0140d64b	-13.110	-6.971
+plugin|76|Trap - Rage Trap - Warm Dirty	43c58069778e3b0a	-14.420	-6.538
+plugin|77|Trap - Rage Trap - Short Bright	eee0303de9cbda22	-14.352	-3.567
+plugin|78|Trap - Rage Trap - Warm	1f899e7849a69a2e	-13.393	-5.758
+plugin|79|Trap - Rage Trap - Short Warm Grit	e789c6d3875074b9	-13.792	-5.671
+plugin|80|Trap - Memphis Trap - M808 Core	bf9ad67c873352fb	-10.313	-3.160
+plugin|81|Trap - Memphis Trap - M808 Tight	8d8e6f0293c96793	-16.114	-4.680
+plugin|82|Trap - Memphis Trap - M808 Dark Long	d1e3876502e8ae9f	-9.614	-3.438
+plugin|83|Trap - Memphis Trap - M808 Bounce	a6a9d53a244c8b4f	-11.108	-2.717
+plugin|84|Trap - Memphis Trap - M808 Hard	5455f292f8ccf9c7	-10.079	-2.118
+plugin|85|Trap - Memphis Trap - M808 Vintage	29b67d9335cf1993	-11.299	-3.474
+plugin|86|Trap - Luxury Trap - Long Warm Clean	72500d4e33987694	-13.129	-8.525
+plugin|87|Trap - Luxury Trap - Warm Clean	26c860a6a533152d	-13.862	-7.168
+plugin|88|Trap - Luxury Trap - Long Bright Clean	900eb66ba4615cb1	-13.039	-7.186
+plugin|89|Trap - Luxury Trap - Warm Clean 2	4be5fb28e722860d	-13.467	-7.083
+plugin|90|Trap - Luxury Trap - Warm	d6bae3bb252511c6	-13.729	-6.189
+plugin|91|Trap - Luxury Trap - Long Warm	2a6a8fe73f1fab28	-13.012	-4.249
+plugin|92|Trap - Luxury Trap - Spinz	1f72951caa33dbc4	-13.864	-3.534
+plugin|93|Trap - Luxury Trap - Lex	a3947f154ea39f23	-14.100	-3.806
+plugin|94|Rap - East Coast - Warm Clean	edd5e4dbbe931d5e	-12.287	-6.394
+plugin|95|Rap - East Coast - Long Dark Grit	aeda2ebba8664c0b	-14.118	-7.918
+plugin|96|Rap - East Coast - Long Bright Clean	436bcc45858994ff	-13.505	-5.061
+plugin|97|Rap - West Coast - Long Warm Clean	2242b16503fb2fd7	-13.304	-4.770
+plugin|98|Rap - West Coast - Warm Clean	918bcda2acae5076	-14.165	-4.504
+plugin|99|Rap - West Coast - Long Warm	ebd97573732a0719	-13.211	-4.477
+plugin|100|Rap - Dirty South - Long Dark Grit	5e3c8c776ad674f6	-12.979	-6.739
+plugin|101|Rap - Dirty South - Long Warm	e9614ca8244e671b	-13.015	-2.658
+plugin|102|Rap - Dirty South - Long Warm Dirty	64a4f927237b7ab8	-12.864	-6.193
+plugin|103|Rap - German Street - Long Bright Dirty	c25bc08a597c9006	-13.310	-6.779
+plugin|104|Rap - German Street - Long Warm Dirty	c3251291fa8ca24f	-13.262	-7.729
+plugin|105|Rap - German Street - Bright	783cdffd47365b88	-13.583	-6.867
+plugin|106|Rap - Russian Rap - Long Dark	10db184f3ca0c00a	-13.023	-6.313
+plugin|107|Rap - Russian Rap - Long Warm Grit	13a3104930eb6bc1	-13.259	-5.461
+plugin|108|Rap - Russian Rap - Long Warm	38f7e106185832ea	-13.180	-6.589
+plugin|109|Rap - RnB Rap - Warm Clean	d7e970637a28c2c2	-13.115	-6.257
+plugin|110|Rap - RnB Rap - Long Dark Clean	889fe8789df6c973	-13.054	-6.659
+plugin|111|Rap - RnB Rap - Dark Clean	bda381fdd12f75ec	-14.822	-3.805
+plugin|112|Rap - Hardcore Rap - Bright Punch	395d7a3f44a42b64	-13.525	-6.418
+plugin|113|Rap - Hardcore Rap - Long Bright Dirty	3f289d1b5359d28e	-17.136	-10.304
+plugin|114|Rap - Hardcore Rap - Dark Dirty Punch	e756ab885617187	-13.030	-7.853
+plugin|115|Drill - Drill - Long Warm	33afbafee1b62dc8	-12.921	-6.280
+plugin|116|Drill - Drill - Long Warm Grit	a3947c47bd8e4cdc	-13.844	-6.920
+plugin|117|Drill - Drill - Long Bright	96f0fcb11f687a8d	-13.394	-6.056
+plugin|118|Drill - Drill - Long Dark Grit	96d321153c05893d	-12.920	-6.744
+plugin|119|Drill - Drill - Long Warm Punch	a1d1b11af2c0a2fb	-13.167	-8.385
+plugin|120|Drill - Drill - Long Bright 2	d611ba9291c561b2	-12.825	-7.560
+plugin|121|Drill - Drill - Warm Clean	3f4e62a78dd5b44f	-14.771	-4.086
+plugin|122|Drill - Drill - Long Warm Clean	6269694901b3033b	-12.964	-7.919
+plugin|123|Drill - Drill - Warm Clean 2	e0ff7a166aa23509	-13.306	-3.868
+plugin|124|Drill - Drill - Long Bright Punch	3525ab7dd1cced9e	-12.749	-6.141
+plugin|125|Drill - Drill - Bright	25140293f2bfcb5b	-13.756	-6.040
+plugin|126|Drill - Drill - Warm Grit	7a875e171596462f	-13.880	-7.430
+plugin|127|DnB - Dancefloor - Sub Clean	55b0cf7b6468a893	-13.094	-4.748
+plugin|128|DnB - Dancefloor - Sub Warm	5f0f4dee729cca3b	-13.093	-4.622
+plugin|129|DnB - Dancefloor - Sub Legato	3f324040be08915f	-13.103	-4.748
+plugin|130|DnB - Dancefloor - Mid Reese	b8fbc725d193de98	-27.934	-5.597
+plugin|131|DnB - Dancefloor - Mid Wide Reese	e8f37bc1449ec5df	-29.574	-7.184
+plugin|132|DnB - Dancefloor - Mid Acid	213e7e1eda236a43	-29.389	-9.611
+plugin|133|DnB - Dancefloor - Mid Wobble	9e66823c145bc850	-26.587	-2.373
+plugin|134|DnB - Dancefloor - Stab Saw	f260842cc8c4d33a	-30.635	-4.566
+plugin|135|DnB - Dancefloor - Stab Short	6a403fd776941db4	-31.125	-2.059
+plugin|136|DnB - Dancefloor - Stab Roll Pulse	4b844b7ef8bc9fc3	-30.979	-2.674
+plugin|137|DnB - Dancefloor - Stab Square	6688f6ee962cdd24	-29.117	-1.962
+plugin|138|DnB - Roller - Dark Clean	94cb8ad0d0a6a6fb	-14.550	-1.087
+plugin|139|DnB - Roller - Long Dark	4f28e55d602fb48c	-13.031	-5.429
+plugin|140|DnB - Roller - Dark Clean 2	32505b8ed5d34d8f	-13.926	-0.706
+plugin|141|DnB - Roller - Long Dark Grit	a2be0101b6059227	-13.376	-6.297
+plugin|142|DnB - Liquid - Long Warm Clean	c1a3647a86a92b19	-12.811	-5.852
+plugin|143|DnB - Liquid - Warm Clean	73f1c595ddcbe0d6	-15.041	-3.186
+plugin|144|DnB - Liquid - Long Dark	fcf4bb0e85a0972f	-13.193	-7.073
+plugin|145|DnB - Liquid - Long Bright Clean	cecbbb999f148f30	-13.782	-4.671
+plugin|146|DnB - Neurofunk - Warm Grit	a61ea25113f3d333	-15.030	-2.437
+plugin|147|DnB - Neurofunk - Bright	85abe9953b94d3a1	-15.248	-4.047
+plugin|148|DnB - Neurofunk - Short Bright Dirty	ce77fc94eb6c004b	-15.069	-3.166
+plugin|149|DnB - Neurofunk - Long Warm Dirty	fab2142937f78163	-13.163	-5.428
+plugin|150|DnB - Jump-Up - Bright Grit Punch	3d9485e127860d74	-15.139	-5.889
+plugin|151|DnB - Jump-Up - Bright	94a995e3f7fff00e	-14.603	-2.143
+plugin|152|DnB - Jump-Up - Warm Grit Punch	d48d6e75184bdb4a	-14.818	-0.526
+plugin|153|DnB - Jump-Up - Bright Dirty	9aea8174dd5c701d	-21.622	-6.891
+plugin|154|DnB - Breakbeat - Short Warm Clean	ee316722ee6029de	-15.290	-0.816
+plugin|155|DnB - Breakbeat - Warm Clean	37f6459487c4b9f0	-13.621	-1.602
+plugin|156|DnB - Breakbeat - Short Warm Clean 2	14ab1bc527dc1255	-15.065	-0.696
+plugin|157|DnB - Breakbeat - Short Warm Clean 3	190c318866e448bb	-15.053	-3.028
+plugin|158|Techno - Peak Time - Bright Punch	2112a2549b22491a	-13.375	-5.085
+plugin|159|Techno - Peak Time - Bright Punch 2	75014f5bd74da86f	-18.157	-2.822
+plugin|160|Techno - Peak Time - Short Warm Punch	593ed288efbd7080	-13.431	-2.736
+plugin|161|Techno - Peak Time - Dark Grit	be561d95a81b7161	-14.244	-2.850
+plugin|162|Techno - Hypnotic - Warm Clean	1e3028a7caa2c2d1	-14.254	-1.319
+plugin|163|Techno - Hypnotic - Short Dark	a8385553bc0722ea	-13.238	-3.271
+plugin|164|Techno - Hypnotic - Warm Clean 2	2733199cf10f9af4	-13.498	-4.299
+plugin|165|Techno - Hypnotic - Long Bright Clean	f559d6914361641b	-13.328	-5.375
+plugin|166|Techno - Minimal - Short Dark Clean	6c5032444a7d14ce	-13.524	-2.943
+plugin|167|Techno - Minimal - Short Warm Clean	f72ac3d671400f60	-13.507	-0.786
+plugin|168|Techno - Minimal - Dark Clean Punch	6f72cd0a42a89296	-13.386	-5.065
+plugin|169|Techno - Minimal - Short Dark Clean 2	9f5db185f56f3b56	-13.553	-2.828
+plugin|170|Techno - Detroit - Bright Clean	52dbe2c2ff678b46	-13.447	-3.836
+plugin|171|Techno - Detroit - Bright	4295f9f33a4e9dfb	-12.760	-5.542
+plugin|172|Techno - Detroit - Warm	baccf59529c93744	-13.555	-2.601
+plugin|173|Techno - Detroit - Warm Clean	4e00c9ebab79b8fd	-13.306	-5.879
+plugin|174|Techno - Dub - Long Dark Clean	ba5869bc82d98872	-12.848	-4.189
+plugin|175|Techno - Dub - Long Dark	ac3ab5cad01656f3	-19.335	-5.203
+plugin|176|Techno - Dub - Long Dark 2	106e6cbb52a1eaae	-13.074	-6.867
+plugin|177|Techno - Dub - Dark	ae13725cb115d6bf	-13.442	-2.308
+plugin|178|Techno - Acid - Bright	8f1e93ac40337d32	-13.197	-1.815
+plugin|179|Techno - Acid - Warm Grit	b0f8611880332c06	-18.757	-4.894
+plugin|180|Techno - Acid - Bright 2	f18c190f796f7538	-13.454	-0.777
+plugin|181|Techno - Acid - Long Bright	aa4f4b3185518c0f	-12.900	-6.954
+plugin|182|Techno - Hard - Bright Grit Punch	bf4e0a3e56e207f3	-21.010	-3.899
+plugin|183|Techno - Hard - Warm Dirty Punch	16af4977c0250fbf	-17.156	-6.784
+plugin|184|Techno - Hard - Short Bright Punch	ef1aac112dd5f02c	-13.108	-3.609
+plugin|185|Techno - Hard - Bright Dirty	4b2e077e4092940b	-13.970	-1.693
+plugin|186|Atmospheric - Pulse - Warm	2bc27a3b49cec143	-12.471	-5.298
+plugin|187|Atmospheric - Pulse - Warm Clean	bbfc6d14f77de64b	-12.599	-4.480
+plugin|188|Atmospheric - Pulse - Warm Clean Punch	f0710dcb442c7f7b	-12.489	-5.554
+plugin|189|Atmospheric - Pulse - Warm 2	a8596b1d75ba4731	-12.872	-3.511
+plugin|190|Atmospheric - Pulse - Warm Punch	cc60effce7d478bb	-12.499	-5.985
+plugin|191|Atmospheric - Two-Step - Warm	c1d38e479b11709d	-12.558	-3.973
+plugin|192|Atmospheric - Two-Step - Warm 2	774de8e0b42a0703	-13.436	-2.952
+plugin|193|Atmospheric - Two-Step - Dark Grit	eeae19169dee9713	-12.622	-5.157
+plugin|194|Atmospheric - Two-Step - Warm Clean Punch	54892281121657f9	-12.609	-6.006
+plugin|195|Atmospheric - Two-Step - Warm 3	d30b6eb90c56c8c1	-12.542	-2.964
+plugin|196|Atmospheric - Broken - Short Warm	5b95ccc0563dddc0	-12.883	-3.944
+plugin|197|Atmospheric - Broken - Short Bright Clean	d81e9b9e6cb64292	-14.461	-5.521
+plugin|198|Atmospheric - Broken - Bright Dirty	1b0e2ee33201ec17	-12.982	-6.190
+plugin|199|Atmospheric - Broken - Bright	5fd47127704c1197	-13.160	-4.587
+plugin|200|Atmospheric - Broken - Warm Clean	1f5638369b52094d	-11.453	-3.545
+plugin|201|Utility - Sub	7cb50dd1877beb83	-13.182	-6.510
+plugin|202|Utility - Sub Warm	2c26be6a282b6e0b	-13.251	-5.795
+plugin|203|Utility - Sub Wide	58a93f68bc20ae6a	-12.895	-5.077
+plugin|204|Utility - 808 Master	9f6a497f3660e08c	-14.860	-0.794
+plugin|205|Trap / Drill - Clean - Still Air	703eb00b11279493	-10.766	-4.203
+plugin|206|Trap / Drill - Clean - Warm Floor	6c8df158fae3127f	-12.982	-5.213
+plugin|207|Trap / Drill - Clean - Soft Bloom	48e8566fae8cc5df	-12.332	-6.303
+plugin|208|Trap / Drill - Punch - Knock	45ffd2d21fb5243b	-17.177	-3.031
+plugin|209|Trap / Drill - Punch - Thud	5ccf79e7646a8133	-14.727	-4.080
+plugin|210|Trap / Drill - Punch - Snap	5620e347e2f44d07	-23.804	-4.352
+plugin|211|Trap / Drill - Grit - Burnt Edge	3a122d1fe39634c3	-16.768	-6.309
+plugin|212|Trap / Drill - Grit - Iron Bark	1f9a60aca807d1ef	-20.788	-5.131
+plugin|213|Trap / Drill - Grit - Black Coil	138d496de6e5d513	-15.256	-7.993
+plugin|214|Trap / Drill - Slide - Low Rail	4294795feb596647	-11.147	-5.188
+plugin|215|Trap / Drill - Slide - Wire	b2d59e2eaa575e53	-13.675	-5.026
+plugin|216|Trap / Drill - Slide - Bent Steel	a0a83ae0c774440f	-15.372	-5.752
+plugin|217|DnB - Dancefloor - Sub Heavy	71bce12796853a63	-8.176	-2.815

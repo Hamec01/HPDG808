@@ -27,7 +27,7 @@ public:
     void paintOverChildren(juce::Graphics& g) override;
     void resized() override;
 
-    // 0 SYNTH, 1 SAMPLE, 2 MIX, 3 FILTER / FX, 4 MASTER (the plugin only)
+    // 0 SYNTH, 1 SAMPLE, 2 MIX, 3 FILTER / FX, 4 MASTER, 5 ADVANCED
     void showTab(int index);
     void stopAudition();
 
@@ -71,10 +71,11 @@ private:
     juce::String trioText() const;
     std::unique_ptr<DragButton> dragButton;
     std::vector<std::unique_ptr<b808::ParamKnob>> headerKnobs;
-    std::array<juce::TextButton, 5> tabs;
-    int tabCount = 5; // HPDG's Sub808 lane plays the master too (stereo since 2026-11-16)
+    std::array<juce::TextButton, 6> tabs;
+    int tabCount = 6; // HPDG's Sub808 lane plays the master too (stereo since 2026-11-16); 6th: ADVANCED (Bass 2.0)
     Bass808Screen screen;
     std::array<std::unique_ptr<b808::Page>, 5> pages;
+    std::unique_ptr<juce::Component> advancedPanel; // the ADVANCED tab: the Advanced engine's sub-pages
     std::unique_ptr<SectionStrip> sectionStrip;
     std::unique_ptr<BassPresetBrowser> presetBrowser;
     std::unique_ptr<juce::FileChooser> chooser;

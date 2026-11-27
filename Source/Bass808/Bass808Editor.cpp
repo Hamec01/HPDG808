@@ -20,6 +20,122 @@ bool isAudioFile(const juce::String& path)
 {
     return juce::File(path).hasFileExtension("wav;aif;aiff;flac;mp3;ogg");
 }
+
+// The Advanced engine's controls (Bass Architecture 2.0): its own sub-tabs over the page area; ENGINE switches a sound
+// between Classic and Advanced (every Advanced knob is silent while it is Classic).
+class AdvancedPanel final : public juce::Component
+{
+public:
+    explicit AdvancedPanel(juce::AudioProcessorValueTreeState& state)
+    {
+        const auto osc = [&state](const char* engineGroup, const char* title, const char* p) -> std::unique_ptr<Page>
+        {
+            // p: the oscillator's id prefix ("advOscA" ...); the ids are BassAdvancedParams' (stable)
+            static std::vector<std::unique_ptr<juce::String>> keep; // the Page items hold const char*
+            const auto id = [&](const char* suffix)
+            {
+                keep.push_back(std::make_unique<juce::String>(juce::String(p) + suffix));
+                return keep.back()->toRawUTF8();
+            };
+            return std::make_unique<Page>(state, std::vector<Page::Group> {
+                { engineGroup, 1, { { Item::Combo, "advEngine", "Engine" } } },
+                { title, 2, { { Item::Toggle, id("On"), "ON" }, { Item::Combo, id("Wave"), "Wave" }, { Item::Knob, id("Oct"), "Octave" },
+                              { Item::Knob, id("Semi"), "Semi" }, { Item::Knob, id("Fine"), "Fine" }, { Item::Knob, id("Level"), "Level" },
+                              { Item::Knob, id("Pan"), "Pan" }, { Item::Knob, id("Shape"), "Shape" },
+                              { Item::Knob, id("Unison"), "Unison" }, { Item::Knob, id("Detune"), "Detune" },
+                              { Item::Knob, id("Spread"), "Spread" }, { Item::Knob, id("Phase"), "Phase" },
+                              { Item::Toggle, id("RandPhase"), "RANDOM" }, { Item::Combo, id("PmFrom"), "PM From" },
+                              { Item::Knob, id("Pm"), "PM" }, { Item::Toggle, id("Audible"), "AUDIBLE" } } },
+            });
+        };
+        pages.push_back(osc("ENGINE", "OSC A", "advOscA"));
+        pages.push_back(osc("ENGINE", "OSC B", "advOscB"));
+        pages.push_back(osc("ENGINE", "OSC C", "advOscC"));
+        pages.push_back(std::make_unique<Page>(state, std::vector<Page::Group> {
+            { "SUB", 2, { { Item::Toggle, "advSubOn", "ON" }, { Item::Combo, "advSubWave", "Wave" }, { Item::Knob, "advSubOct", "Octave" },
+                          { Item::Knob, "advSubLevel", "Level" }, { Item::Knob, "advSubWarm", "Warm" } } },
+            { "NOISE", 1, { { Item::Knob, "advNoise", "Level" } } },
+            { "FILTER A", 2, { { Item::Combo, "advFltAType", "Type" }, { Item::Knob, "advCutA", "Cutoff" }, { Item::Knob, "advResA", "Resonance" },
+                               { Item::Knob, "advKeyA", "Key" }, { Item::Knob, "advEnvA", "Env" }, { Item::Knob, "advDrive", "Drive" } } },
+            { "FILTER B", 2, { { Item::Toggle, "advFltBOn", "ON" }, { Item::Combo, "advFltBType", "Type" }, { Item::Knob, "advCutB", "Cutoff" },
+                               { Item::Knob, "advResB", "Resonance" }, { Item::Toggle, "advFltPar", "PARALLEL" } } },
+        }));
+        pages.push_back(std::make_unique<Page>(state, std::vector<Page::Group> {
+            { "AMP ENV", 2, { { Item::Knob, "advAmpA", "Attack" }, { Item::Knob, "advAmpD", "Decay" }, { Item::Knob, "advAmpS", "Sustain" },
+                              { Item::Knob, "advAmpR", "Release" } } },
+            { "FILTER ENV", 2, { { Item::Knob, "advFenvA", "Attack" }, { Item::Knob, "advFenvD", "Decay" }, { Item::Knob, "advFenvS", "Sustain" },
+                                 { Item::Knob, "advFenvR", "Release" } } },
+            { "MOD ENV", 2, { { Item::Knob, "advMenvA", "Attack" }, { Item::Knob, "advMenvD", "Decay" }, { Item::Knob, "advMenvS", "Sustain" },
+                              { Item::Knob, "advMenvR", "Release" } } },
+        }));
+        {
+            std::vector<Page::Group> groups;
+            static const char* lfoIds[4][4] { { "advLfo1Shape", "advLfo1Rate", "advLfo1Sync", "advLfo1Retrig" },
+                                              { "advLfo2Shape", "advLfo2Rate", "advLfo2Sync", "advLfo2Retrig" },
+                                              { "advLfo3Shape", "advLfo3Rate", "advLfo3Sync", "advLfo3Retrig" },
+                                              { "advLfo4Shape", "advLfo4Rate", "advLfo4Sync", "advLfo4Retrig" } };
+            static const char* lfoTitles[4] { "LFO 1", "LFO 2", "LFO 3", "LFO 4" };
+            for (int l = 0; l < 4; ++l)
+                groups.push_back({ lfoTitles[l], 2, { { Item::Combo, lfoIds[l][0], "Shape" }, { Item::Knob, lfoIds[l][1], "Rate" },
+                                                      { Item::Combo, lfoIds[l][2], "Sync" }, { Item::Toggle, lfoIds[l][3], "RETRIG" } } });
+            pages.push_back(std::make_unique<Page>(state, std::move(groups)));
+        }
+        static const char* modIds[8][3] { { "advMod1Src", "advMod1Dst", "advMod1Amt" }, { "advMod2Src", "advMod2Dst", "advMod2Amt" },
+                                          { "advMod3Src", "advMod3Dst", "advMod3Amt" }, { "advMod4Src", "advMod4Dst", "advMod4Amt" },
+                                          { "advMod5Src", "advMod5Dst", "advMod5Amt" }, { "advMod6Src", "advMod6Dst", "advMod6Amt" },
+                                          { "advMod7Src", "advMod7Dst", "advMod7Amt" }, { "advMod8Src", "advMod8Dst", "advMod8Amt" } };
+        static const char* modTitles[8] { "MOD 1", "MOD 2", "MOD 3", "MOD 4", "MOD 5", "MOD 6", "MOD 7", "MOD 8" };
+        for (int half = 0; half < 2; ++half)
+        {
+            std::vector<Page::Group> groups;
+            for (int m = half * 4; m < half * 4 + 4; ++m)
+                groups.push_back({ modTitles[m], 2, { { Item::Combo, modIds[m][0], "Source" }, { Item::Combo, modIds[m][1], "Target" },
+                                                      { Item::Knob, modIds[m][2], "Amount" } } });
+            pages.push_back(std::make_unique<Page>(state, std::move(groups)));
+        }
+        pages.push_back(std::make_unique<Page>(state, std::vector<Page::Group> {
+            { "DRIVE (HAMLOMAG)", 2, { { Item::Combo, "advFxDrvModel", "Model" }, { Item::Knob, "advFxDrv", "Drive" },
+                                       { Item::Knob, "advFxDrvMix", "Mix" } } },
+            { "MULTIBAND", 2, { { Item::Knob, "advMb", "Amount" }, { Item::Knob, "advMbTime", "Time" } } },
+            { "CHORUS", 2, { { Item::Knob, "advChoMix", "Mix" }, { Item::Knob, "advChoRate", "Rate" }, { Item::Knob, "advChoDepth", "Depth" } } },
+            { "MIDS", 2, { { Item::Knob, "advWidth", "Width" }, { Item::Knob, "advMonoHz", "Mono Below" }, { Item::Knob, "advMidLevel", "Level" },
+                           { Item::Knob, "lowCut", "Low Cut" }, { Item::Toggle, "mLimit", "LIMIT" } } },
+        }));
+        static const char* names[] { "OSC A", "OSC B", "OSC C", "SUB / FILTER", "ENVELOPES", "LFO", "MOD 1-4", "MOD 5-8", "FX" };
+        for (size_t i = 0; i < pages.size(); ++i)
+        {
+            auto button = std::make_unique<juce::TextButton>(names[i]);
+            button->setRadioGroupId(8082);
+            button->setClickingTogglesState(true);
+            button->onClick = [this, i] { show(static_cast<int>(i)); };
+            addAndMakeVisible(*button);
+            buttons.push_back(std::move(button));
+            addChildComponent(*pages[i]);
+        }
+        buttons[0]->setToggleState(true, juce::dontSendNotification);
+        show(0);
+    }
+
+    void show(int index)
+    {
+        for (size_t i = 0; i < pages.size(); ++i)
+            pages[i]->setVisible(static_cast<int>(i) == index);
+    }
+
+    void resized() override
+    {
+        const int w = (getWidth() - 8 * 4) / static_cast<int>(buttons.size());
+        for (size_t i = 0; i < buttons.size(); ++i)
+            buttons[i]->setBounds(static_cast<int>(i) * (w + 4), 0, w, 22);
+        for (auto& page : pages)
+            page->setBounds(0, 28, getWidth(), getHeight() - 28);
+    }
+
+private:
+    std::vector<std::unique_ptr<juce::TextButton>> buttons;
+    std::vector<std::unique_ptr<Page>> pages;
+};
+
 } // namespace
 
 // One quiet strip above the controls, with independent selections for all five modules.
@@ -299,7 +415,7 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
         addAndMakeVisible(*headerKnobs.back());
     }
 
-    static const char* tabNames[] { "SYNTH", "SAMPLE", "MIX", "FILTER  /  FX", "MASTER" };
+    static const char* tabNames[] { "SYNTH", "SAMPLE", "MIX", "FILTER  /  FX", "MASTER", "ADVANCED" };
     for (size_t i = 0; i < static_cast<size_t>(tabCount); ++i)
     {
         tabs[i].setButtonText(tabNames[i]);
@@ -373,6 +489,8 @@ Bass808Editor::Bass808Editor(Bass808Processor& processor)
     });
     for (auto& page : pages)
         addChildComponent(*page);
+    advancedPanel = std::make_unique<AdvancedPanel>(state);
+    addChildComponent(*advancedPanel);
 
     sectionStrip = std::make_unique<SectionStrip>(bass);
     addAndMakeVisible(*sectionStrip);
@@ -408,8 +526,15 @@ void Bass808Editor::selectTab(int index)
         stopAudition();
     for (size_t i = 0; i < pages.size(); ++i)
         pages[i]->setVisible(static_cast<int>(i) == index);
-    screen.setMode(static_cast<Bass808Screen::Mode>(index));
-    if (sectionStrip != nullptr) sectionStrip->setSection(index);
+    if (advancedPanel != nullptr)
+        advancedPanel->setVisible(index == 5);
+    // ADVANCED shows the sound on MIX's screen and strip
+    screen.setMode(static_cast<Bass808Screen::Mode>(index == 5 ? static_cast<int>(Bass808Screen::Mix) : index));
+    if (sectionStrip != nullptr)
+    {
+        sectionStrip->setSection(index == 5 ? 2 : index);
+        sectionStrip->setVisible(index != 5); // the panel's sub-tabs sit there
+    }
 }
 
 void Bass808Editor::updatePresetName()
@@ -708,7 +833,7 @@ void Bass808Editor::resized()
         x += 66;
     }
     for (size_t i = 0; i < static_cast<size_t>(tabCount); ++i)
-        tabs[i].setBounds(12 + static_cast<int>(i) * 136, kTabTop, 130, kTabHeight);
+        tabs[i].setBounds(12 + static_cast<int>(i) * 112, kTabTop, 106, kTabHeight);
     dragButton->setBounds(kWidth - 12 - 70, kTabTop, 70, kTabHeight);
     exportButton.setBounds(kWidth - 12 - 70 - 6 - 104, kTabTop, 104, kTabHeight);
     trioButton.setBounds(kWidth - 12 - 70 - 6 - 104 - 6 - 90, kTabTop, 90, kTabHeight);
@@ -716,6 +841,8 @@ void Bass808Editor::resized()
     sectionStrip->setBounds(12, 374, kWidth - 24, 28);
     for (auto& page : pages)
         page->setBounds(12, kPageTop, kWidth - 24, kHeight - kPageTop - 8);
+    if (advancedPanel != nullptr)
+        advancedPanel->setBounds(12, kPageTop - 34, kWidth - 24, kHeight - kPageTop + 26);
     presetBrowser->setBounds(getLocalBounds());
 }
 } // namespace bbg
