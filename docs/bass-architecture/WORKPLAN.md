@@ -117,3 +117,15 @@ HPDG + HPDG808 as products. Learning material: 20 Dancefloor tutorials (transcri
 - Mix: kick loudest (~0 dB), snare a little under, hats under that; the bass bus -2.8 dB under the drums; the main bass
   ~0 dB into the bus, the support bass ~-6 dB; at most 4 bass elements.
 - Movement built into the patch (evolving while the note holds), 8th rhythm, call and response phrases.
+- Pulse bass (Dimension / Sub Focus, Serum 2): saw, unison 4; OSC B -2 oct, digital wavetable "I Can Has Kick" at
+  157; both through filter 1, cutoff down, ENV 1 on cutoff 70 %; hyper with its own envelope, distortion; EQ out the
+  lows (the sub is separate); OTT 49 %. Sub Focus: ENV 2 on cutoff and on the tube drive, OTT -> Decapitator -> OTT
+  -> Blood Overdrive -> EQ (-500 Hz mud) -> Kickstart -> limiter. Gap: no wavetable oscillator yet (P2 WT / Draw Wave).
+- Sub (Dimension): additive bins 1 / 3 / 5 at 67 / 33 / 4 %; (Hybrid) a sine + a sine with bin 3 at 71 %. Gap: the
+  Advanced sub has only Warm (tanh); explicit 3rd / 5th harmonic levels would match it exactly.
+- Sub Focus style: two saws, one mono, one 9-voice unison; short bass notes, 4-bar patterns, a variation at the end
+  of every 4 bars.
+- Drums: a top kick layered on the kick; kick and snare mono, the kick loudest; hats every beat + one between the beats
+  with changing samples, layered hats, a cowbell; parallel compression and distortion on the drum bus; a crash every
+  4 bars; break layers chopped in for variation.
+
