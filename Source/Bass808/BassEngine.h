@@ -7,6 +7,7 @@
 
 #include <juce_core/juce_core.h>
 
+#include "Bass808/BassAdvanced.h"
 #include "Bass808/BassSample.h"
 #include "Bass808/BassSettings.h"
 #include "Bass808/BassSaturator.h"
@@ -55,6 +56,8 @@ public:
     void setSettings(const BassSettings&, float synthGain);
     // Adds this voice to `out`; lfo: the LFO per sample (-1 .. 1).
     void render(float* out, const float* lfo, int numSamples);
+    // The Advanced engine (BassSettings::engine): adds the sub (mono) and the mids (stereo).
+    void renderAdvanced(float* sub, float* left, float* right, int numSamples, double tempo);
 
     struct Biquad // RBJ, also the engine's bus filter
     {
@@ -103,6 +106,11 @@ private:
     double sampleRate = 48000.0;
     float synthGain = 1.0f, velocity = 1.0f;
     bool active = false;
+    // Advanced
+    adv::Voice advanced;
+    bool advancedStarted = false, advancedReleased = false;
+    int advancedNote = 48;
+    float advancedVelocity = 1.0f;
 
     double baseHz = 65.4, semitones = 0.0, targetSemitones = 0.0, glideStep = 0.0;
     int glideRemaining = 0;
@@ -178,7 +186,9 @@ public:
     void noteOn(int note, float velocity, int playMode, float glideMs);
     void noteOff(int note);
     void allNotesOff();
-    void render(float* mono, int numSamples);
+    // side (optional): the Advanced engine adds its stereo half here ((left - right) / 2; mono is (left + right) / 2);
+    // Classic never touches it.
+    void render(float* mono, int numSamples, float* side = nullptr);
     bool isActive() const noexcept { return voices[0].isActive() || voices[1].isActive(); }
 
     // The saturator works sample by sample: no latency.
@@ -193,7 +203,7 @@ public:
 private:
     void startNote(int note, float velocity, bool fromHeldStack);
     void releaseNote(int note);
-    void renderChunk(float* mono, int numSamples);
+    void renderChunk(float* mono, int numSamples, float* side);
     double lfoHz() const noexcept;
     int playMode() const noexcept { return modeOverride >= 0 ? modeOverride : settings.mode; }
     void processBusFilter(float* mono, int numSamples) noexcept;
@@ -222,6 +232,10 @@ private:
 
     BassSaturator saturator;
     std::vector<float> lfoBuffer;
+    // Advanced: the voices' sub and mids, then the mids' FX
+    std::vector<float> advSub, advLeft, advRight;
+    adv::MidFx advFx;
+    bool advWasActive = false;
     int chunkSize = 512;
 };
 } // namespace bbg

@@ -4,6 +4,7 @@
 #include "BassDrawWave.h"
 #include "Bass808Widgets.h"
 #include "BassPresetLibrary.h"
+#include "BassAdvancedParams.h"
 
 #include <string_view>
 
@@ -305,6 +306,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout Bass808Processor::createLayo
                                                                 juce::StringArray::fromTokens(p.choices, ",", ""), defaults.*(p.field)));
     for (const auto& p : boolParams())
         layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { p.id, p.version }, p.name, defaults.*(p.field)));
+    // version 7: the Advanced engine (Bass Architecture 2.0)
+    for (const auto& p : advancedParams())
+    {
+        const float value = p.get(defaults);
+        if (p.kind == AdvancedParam::Bool)
+            layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { p.id, 7 }, p.name, value >= 0.5f));
+        else if (p.kind == AdvancedParam::Choice)
+            layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { p.id, 7 }, p.name, p.choices, juce::roundToInt(value)));
+        else
+        {
+            juce::NormalisableRange<float> range(p.low, p.high, p.step);
+            if (p.centre > 0.0f)
+                range.setSkewForCentre(p.centre);
+            layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID { p.id, 7 }, p.name, range, value,
+                                                                   juce::AudioParameterFloatAttributes().withLabel(p.unit)));
+        }
+    }
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { "trio", 6 }, "Trio", false));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "trioMid", 6 }, "Trio Ch 2", trioChoices(false), 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "trioStab", 6 }, "Trio Ch 3", trioChoices(true), 0));
@@ -320,6 +338,8 @@ BassSettings Bass808Processor::currentSettings() const
         s.*(p.field) = juce::roundToInt(apvts.getRawParameterValue(p.id)->load());
     for (const auto& p : boolParams())
         s.*(p.field) = apvts.getRawParameterValue(p.id)->load() >= 0.5f;
+    for (const auto& p : advancedParams())
+        p.set(s, apvts.getRawParameterValue(p.id)->load());
     s.drawnWave = getDrawWave();
     return s;
 }
@@ -339,6 +359,8 @@ void Bass808Processor::writeSettings(const BassSettings& s)
         setParameter(p.id, static_cast<float>(s.*(p.field)));
     for (const auto& p : boolParams())
         setParameter(p.id, s.*(p.field) ? 1.0f : 0.0f);
+    for (const auto& p : advancedParams())
+        setParameter(p.id.toRawUTF8(), p.get(s));
 }
 
 void Bass808Processor::applySectionPreset(int section, const BassSettings& s)
@@ -525,12 +547,12 @@ void Bass808Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
     engine.prepare(sampleRate, samplesPerBlock);
     master.prepare(sampleRate);
     mono.assign(static_cast<size_t>(juce::jmax(1, samplesPerBlock)), 0.0f);
-    left = right = mono;
+    left = right = side = mono;
     for (auto& voice : trio)
     {
         voice.engine.prepare(sampleRate, samplesPerBlock);
         voice.master.prepare(sampleRate);
-        voice.mono = voice.left = voice.right = mono;
+        voice.mono = voice.left = voice.right = voice.side = mono;
     }
     setLatencySamples(engine.latencySamples());
 }
@@ -551,8 +573,9 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
         mono.resize(static_cast<size_t>(numSamples)); // a host that sends more than it announced
         left.resize(mono.size());
         right.resize(mono.size());
+        side.resize(mono.size());
         for (auto& voice : trio)
-            voice.mono = voice.left = voice.right = mono;
+            voice.mono = voice.left = voice.right = voice.side = mono;
     }
     keyboardState.processNextMidiBuffer(midi, 0, numSamples, true);
 
@@ -606,13 +629,17 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     };
     const auto renderAll = [&](int from, int count)
     {
-        engine.render(mono.data() + from, count);
+        engine.render(mono.data() + from, count, side.data() + from);
         for (auto& voice : trio)
             if (trioOn || voice.engine.isActive())
-                voice.engine.render(voice.mono.data() + from, count);
+                voice.engine.render(voice.mono.data() + from, count, voice.side.data() + from);
     };
+    std::fill(side.begin(), side.begin() + numSamples, 0.0f);
     for (auto& voice : trio)
+    {
         std::fill(voice.mono.begin(), voice.mono.begin() + numSamples, 0.0f);
+        std::fill(voice.side.begin(), voice.side.begin() + numSamples, 0.0f);
+    }
 
     int position = 0;
     for (const auto metadata : midi)
@@ -641,6 +668,12 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
 
     // the master: mono in, stereo out (a mono output gets the middle: left + right is the mono sound)
     master.process(mono.data(), left.data(), right.data(), numSamples, settings);
+    if (settings.engine == BassSettings::Advanced)
+        for (int i = 0; i < numSamples; ++i)
+        {
+            left[static_cast<size_t>(i)] += side[static_cast<size_t>(i)];
+            right[static_cast<size_t>(i)] -= side[static_cast<size_t>(i)];
+        }
     masterCorrelationNow.store(master.correlation(), std::memory_order_relaxed);
     masterGainNow.store(master.gainChangeDb(), std::memory_order_relaxed);
     // the Trio voices, each through its own preset's master, summed after the main sound's
@@ -650,8 +683,8 @@ void Bass808Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
             voice.master.process(voice.mono.data(), voice.left.data(), voice.right.data(), numSamples, voice.preset->settings);
             for (int i = 0; i < numSamples; ++i)
             {
-                left[static_cast<size_t>(i)] += voice.left[static_cast<size_t>(i)];
-                right[static_cast<size_t>(i)] += voice.right[static_cast<size_t>(i)];
+                left[static_cast<size_t>(i)] += voice.left[static_cast<size_t>(i)] + voice.side[static_cast<size_t>(i)];
+                right[static_cast<size_t>(i)] += voice.right[static_cast<size_t>(i)] - voice.side[static_cast<size_t>(i)];
             }
         }
 
@@ -762,6 +795,14 @@ void Bass808Processor::setStateInformation(const void* data, int sizeInBytes)
         parameter.setProperty("value", defaults.*(p.field), nullptr);
         state.appendChild(parameter, nullptr);
     }
+    for (const auto& p : advancedParams()) // a project from before the Advanced engine: Classic, every adv default
+        if (!state.getChildWithProperty("id", p.id).isValid())
+        {
+            juce::ValueTree parameter("PARAM");
+            parameter.setProperty("id", p.id, nullptr);
+            parameter.setProperty("value", p.get(defaults), nullptr);
+            state.appendChild(parameter, nullptr);
+        }
     for (const char* id : { "trio", "trioMid", "trioStab" }) // off / first preset in a project from before Trio
         if (!state.getChildWithProperty("id", id).isValid())
         {

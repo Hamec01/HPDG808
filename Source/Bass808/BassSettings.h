@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <juce_core/juce_core.h>
 
@@ -111,6 +112,81 @@ struct BassSettings
     float masterReleaseMs = 150.0f;
     float masterDynamics = 0.0f;     // -1 compress .. 1 expand
     bool masterLimit = false;
+
+    // ---- Advanced engine (Bass Architecture 2.0, docs/bass-architecture/WORKPLAN.md). engine = Classic ignores
+    // every adv field, so a Classic sound stays bit-identical. Advanced shares the note lifecycle (held stack,
+    // Glide / Legato, the 3 ms choke), the bus filter, Low Cut (on its mids only) and the gain with Classic.
+    enum Engine { Classic = 0, Advanced };
+    enum AdvWave { AdvSine = 0, AdvTriangle, AdvSaw, AdvSquare, AdvPulse, NumAdvWaves };
+    enum AdvModSource { ModNone = 0, ModLfo1, ModLfo2, ModLfo3, ModLfo4, ModFilterEnv, ModModEnv, ModAmpEnv, ModVelocity,
+                        ModNote, NumModSources };
+    enum AdvModDest { DestNone = 0, DestPitch, DestOscAPitch, DestOscBPitch, DestOscCPitch, DestOscALevel, DestOscBLevel,
+                      DestOscCLevel, DestOscAShape, DestOscBShape, DestOscCShape, DestOscAPm, DestOscBPm, DestOscCPm,
+                      DestCutoffA, DestResoA, DestCutoffB, DestDrive, DestDetune, DestNoise, DestSub, DestWidth, DestAmp,
+                      NumModDests };
+    struct AdvOsc
+    {
+        bool on = false;
+        int wave = AdvSaw;
+        int octave = 0;           // -3 .. 3
+        float semitones = 0.0f;   // -24 .. 24
+        float fine = 0.0f;        // cents
+        float levelDb = -6.0f;
+        float pan = 0.0f;         // -1 .. 1
+        int unison = 1;           // 1 .. 7 voices
+        float detune = 0.25f;     // 0 .. 1: the outer voices this share of 50 cents away
+        float spread = 0.5f;      // 0 .. 1: the outer voices this far to the sides
+        float shape = 0.0f;       // Pulse: width; Saw: a saw an octave up mixed in; Sine / Triangle: fold
+        float phase = 0.0f;       // 0 .. 1, at the note (randomPhase off)
+        bool randomPhase = true;  // unison voices start anywhere (a real stack); voice 1 keeps `phase`
+        int pmFrom = -1;          // -1: none, else an oscillator of a HIGHER index (C -> A / B, B -> A: acyclic)
+        float pmAmount = 0.0f;    // 0 .. 1 (index up to 4 radians)
+        bool audible = true;      // off: only modulates (PM)
+    };
+    struct AdvEnv
+    {
+        float attackMs = 2.0f, decayMs = 300.0f, sustain = 1.0f, releaseMs = 60.0f;
+    };
+    struct AdvLfo
+    {
+        int shape = 0;            // 0 sine, 1 triangle, 2 saw up, 3 saw down, 4 square, 5 sample & hold, 6 smooth random
+        float rateHz = 2.0f;
+        int sync = 0;             // as lfoSync: 0 free, then 1/1 1/2 1/4 1/8 1/16 1/4T 1/8T 1/16T
+        bool retrigger = true;
+    };
+    struct AdvMod
+    {
+        int source = ModNone, dest = DestNone;
+        float amount = 0.0f;      // -1 .. 1 of the destination's range (pitch 24 st, cutoff 6 oct, levels 24 dB, ...)
+    };
+    int engine = Classic;
+    std::array<AdvOsc, 3> advOsc {};
+    // the sub: mono, its own sine / triangle, under the mids and past their FX
+    bool advSubOn = false;
+    int advSubWave = 0;           // 0 sine, 1 triangle
+    int advSubOctave = -1;        // -2 .. 0 from the played note
+    float advSubLevelDb = -6.0f;
+    float advSubWarm = 0.0f;      // 0 .. 1 soft saturation of the sub alone
+    float advNoiseDb = -60.0f;    // white noise into the mids' filter (attack, texture); -60 off
+    // filters (the mids): A, B in series or parallel
+    int advFilterAType = LP24;    // LP12, LP24, HP12, BP
+    float advCutoffA = 20000.0f, advResoA = 0.0f, advKeyA = 0.0f, advEnvA = 0.0f; // env: octaves of the filter env
+    float advDriveDb = 0.0f;      // before filter A (0 .. 24 dB, tanh with make-up)
+    bool advFilterBOn = false;
+    int advFilterBType = HP12;
+    float advCutoffB = 20.0f, advResoB = 0.0f;
+    bool advFiltersParallel = false;
+    AdvEnv advAmpEnv {}, advFilterEnv { 1.0f, 250.0f, 0.0f, 120.0f }, advModEnv { 1.0f, 250.0f, 0.0f, 120.0f };
+    std::array<AdvLfo, 4> advLfo {};
+    std::array<AdvMod, 8> advMod {};
+    // mid FX (after the voices, stereo)
+    int advFxDriveModel = 0;      // the saturator's models (0 off)
+    float advFxDriveDb = 0.0f, advFxDriveMix = 1.0f;
+    float advMultiband = 0.0f;    // 0 .. 1: three bands, each pressed down above and lifted below its target (OTT-like)
+    float advMultibandMs = 30.0f;
+    float advChorusMix = 0.0f, advChorusRateHz = 0.6f, advChorusDepth = 0.5f;
+    float advWidth = 1.0f;        // 0 mono .. 2: the mids' side level
+    float advMidDb = 0.0f;        // the mids' level against the sub
 
     // play
     int mode = Glide;

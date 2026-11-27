@@ -119,12 +119,12 @@ private:
         BassEngine engine;
         BassMaster master;
         const BassPreset* preset = nullptr;
-        std::vector<float> mono, left, right;
+        std::vector<float> mono, left, right, side;
     };
     std::array<TrioVoice, 2> trio;
     int currentPreset = 0;
     juce::String userPresetName;
-    std::vector<float> mono, left, right;
+    std::vector<float> mono, left, right, side; // side: the Advanced engine's stereo half, added after the master
     std::atomic<float> masterCorrelationNow { 1.0f }, masterGainNow { 0.0f };
     std::atomic<double> hostBpm { 120.0 };
     std::atomic<double> manualBpm { 120.0 };

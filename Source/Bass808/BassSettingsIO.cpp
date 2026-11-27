@@ -1,5 +1,6 @@
 #include "BassSettingsIO.h"
 #include "BassDrawWave.h"
+#include "BassAdvancedParams.h"
 
 namespace bbg
 {
@@ -140,6 +141,7 @@ juce::ValueTree bassSettingsToTree(const BassSettings& settings)
     // only when on: every sound saved before it existed keeps the same tree (saved factory copies still match)
     if (settings.lowCutHz > 0.0f)
         tree.setProperty("lowCutHz", settings.lowCutHz, nullptr);
+    writeAdvancedSettings(tree, settings); // only an Advanced sound
     writeDrawWave(tree, settings.drawnWave);
     return tree;
 }
@@ -160,6 +162,7 @@ BassSettings bassSettingsFromTree(const juce::ValueTree& tree)
             settings.*(f.member) = static_cast<bool>(tree.getProperty(f.id));
     if (tree.hasProperty("lowCutHz"))
         settings.lowCutHz = static_cast<float>(tree.getProperty("lowCutHz"));
+    readAdvancedSettings(tree, settings);
     settings.drawnWave = readDrawWave(tree);
     settings.wave = juce::jlimit(0, BassSettings::NumWaves - 1, settings.wave);
     settings.filterType = juce::jlimit(0, BassSettings::NumFilters - 1, settings.filterType);

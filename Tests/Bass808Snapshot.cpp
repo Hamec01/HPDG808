@@ -18,6 +18,7 @@ int runBass808MemphisLab();
 int runBass808PresetsLab(const juce::File& out);
 int writeGolden(const juce::File& file);
 int checkGolden(const juce::File& file);
+int runAdvancedRender(const juce::File& spec, const juce::File& out, double bpm);
 
 namespace
 {
@@ -664,6 +665,8 @@ int main(int argc, char* argv[])
         return checkFullReference(juce::File(juce::String(argv[2])), juce::File(juce::String(argv[3])));
     if (argc == 3 && juce::String(argv[1]) == "--auto-grid-check")
         return checkAutoGrid(juce::File(juce::String(argv[2])));
+    if ((argc == 4 || argc == 5) && juce::String(argv[1]) == "--adv-render")
+        return runAdvancedRender(juce::File(juce::String(argv[2])), juce::File(juce::String(argv[3])), argc == 5 ? juce::String(argv[4]).getDoubleValue() : 174.0);
     if (argc == 3 && juce::String(argv[1]) == "--golden-write")
         return writeGolden(juce::File(juce::String(argv[2])));
     if (argc == 3 && juce::String(argv[1]) == "--golden-check")

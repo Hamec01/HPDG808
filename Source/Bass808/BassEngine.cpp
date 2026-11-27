@@ -170,6 +170,7 @@ void BassVoice::prepare(double newSampleRate)
     grainLength = 2 * juce::jmax(16, static_cast<int>(0.0225 * sampleRate)); // 45 ms, even
     knobGlide = 1.0 - std::exp(-1.0 / (0.01 * sampleRate));
     drawFadeSamples = std::max(1, static_cast<int>(0.005 * sampleRate));
+    advanced.prepare(sampleRate);
     active = false;
 }
 
@@ -190,6 +191,8 @@ void BassVoice::setSettings(const BassSettings& newSettings, float newSynthGain)
     }
     settings = newSettings;
     synthGain = newSynthGain;
+    if (settings.engine == BassSettings::Advanced)
+        advanced.setSettings(settings);
     tanhDrive = std::tanh(static_cast<double>(settings.drive));
     tanhBias = std::tanh(static_cast<double>(settings.drive) * settings.bias);
     oscBGainTarget = settings.oscBLevelDb > BassSettings::kOscBOffDb
@@ -364,6 +367,9 @@ void BassVoice::noteOn(double frequencyHz, float newVelocity, const BassSettings
     sampleAge = 0.0;
 
     updateNoteFilters();
+    advancedStarted = advancedReleased = false; // the Advanced voice starts at its first sample (it needs the tempo)
+    advancedNote = juce::jlimit(0, 127, static_cast<int>(std::lround(69.0 + 12.0 * std::log2(baseHz / 440.0))));
+    advancedVelocity = newVelocity;
     active = true;
 }
 
@@ -790,6 +796,60 @@ void BassVoice::render(float* out, const float* lfo, int numSamples)
     }
 }
 
+void BassVoice::renderAdvanced(float* sub, float* left, float* right, int numSamples, double tempo)
+{
+    if (!active)
+        return;
+    advanced.setTempo(tempo);
+    if (!advancedStarted)
+    {
+        advanced.start(advancedVelocity, advancedNote, tempo);
+        advancedStarted = true;
+    }
+    for (int i = 0; i < numSamples && active; ++i)
+    {
+        if (glideRemaining > 0)
+        {
+            if (--glideRemaining <= 0)
+                semitones = targetSemitones;
+            else if (glideLinearRate)
+                semitones = 12.0 * std::log2(glideRatio += glideRatioStep);
+            else
+                semitones += glideStep;
+        }
+        if (fadeTotal > 0 && !advancedReleased)
+        {
+            advanced.release();
+            advancedReleased = true;
+        }
+        double gain = velocity;
+        if (fadeTotal > 0)
+        {
+            if (fadeRemaining <= 0)
+            {
+                active = false;
+                break;
+            }
+            gain *= fadeGain();
+            --fadeRemaining;
+        }
+        else if (recoverRemaining > 0)
+        {
+            gain *= fadeGain();
+            --recoverRemaining;
+            advancedReleased = false;
+        }
+        float s = 0.0f, l = 0.0f, r = 0.0f;
+        advanced.tick(noteHz(), gain, s, l, r);
+        sub[i] += s;
+        left[i] += l;
+        right[i] += r;
+        ++elapsed;
+        if (advanced.finished() || elapsed >= maxSamples)
+            active = false;
+    }
+}
+
 // ---------------------------------------------------------------------------------------- engine
 double BassEngine::noteHz(int note, float tuneSemitones)
 {
@@ -817,6 +877,10 @@ void BassEngine::prepare(double newSampleRate, int maxBlockSize)
     busGain = dbToGain(settings.gainDb);
     busFade = 0;
     lfoBuffer.assign(static_cast<size_t>(chunkSize), 0.0f);
+    advSub.assign(static_cast<size_t>(chunkSize), 0.0f);
+    advLeft = advRight = advSub;
+    advFx.prepare(sampleRate, chunkSize);
+    advWasActive = false;
     heldCount = 0;
     sounding = -1;
     lfoPhase = 0.0;
@@ -892,7 +956,8 @@ void BassEngine::releaseNote(int note)
         startNote(held[static_cast<size_t>(heldCount - 1)], lastVelocity, true); // back to the key still held
         return;
     }
-    voices[static_cast<size_t>(currentVoice)].noteOff(juce::jmax(1, static_cast<int>(settings.releaseMs * 0.001 * sampleRate)));
+    const float releaseMs = settings.engine == BassSettings::Advanced ? settings.advAmpEnv.releaseMs : settings.releaseMs;
+    voices[static_cast<size_t>(currentVoice)].noteOff(juce::jmax(1, static_cast<int>(releaseMs * 0.001 * sampleRate)));
     sounding = -1;
 }
 
@@ -929,10 +994,10 @@ void BassEngine::allNotesOff()
         voice.noteOff(static_cast<int>(0.003 * sampleRate));
 }
 
-void BassEngine::render(float* mono, int numSamples)
+void BassEngine::render(float* mono, int numSamples, float* side)
 {
     for (int start = 0; start < numSamples; start += chunkSize)
-        renderChunk(mono + start, std::min(chunkSize, numSamples - start));
+        renderChunk(mono + start, std::min(chunkSize, numSamples - start), side != nullptr ? side + start : nullptr);
 }
 
 void BassEngine::processBusFilter(float* out, int n) noexcept
@@ -1027,10 +1092,50 @@ void BassEngine::processLowCut(float* out, int n) noexcept
     }
 }
 
-void BassEngine::renderChunk(float* out, int n)
+void BassEngine::renderChunk(float* out, int n, float* side)
 {
     const bool wasActive = isActive() || busLastOut > 1.0e-6;
     std::fill(out, out + n, 0.0f);
+    if (settings.engine == BassSettings::Advanced)
+    {
+        // the voices' sub and mids, the mids' FX (Low Cut among them), then the sum: mono = sub + mid,
+        // side = the mids' stereo half
+        const bool busy = isActive();
+        if (!busy && !advWasActive)
+        {
+            processBusFilter(out, n);
+            return;
+        }
+        advWasActive = true;
+        std::fill(advSub.begin(), advSub.begin() + n, 0.0f);
+        std::fill(advLeft.begin(), advLeft.begin() + n, 0.0f);
+        std::fill(advRight.begin(), advRight.begin() + n, 0.0f);
+        for (auto& voice : voices)
+            voice.renderAdvanced(advSub.data(), advLeft.data(), advRight.data(), n, tempo);
+        advFx.process(advLeft.data(), advRight.data(), n, settings);
+        double tail = 0.0;
+        for (int i = 0; i < n; ++i)
+        {
+            const auto l = advLeft[static_cast<size_t>(i)], r = advRight[static_cast<size_t>(i)];
+            out[i] = advSub[static_cast<size_t>(i)] + 0.5f * (l + r);
+            tail = std::max(tail, static_cast<double>(std::abs(l) + std::abs(r)));
+        }
+        if (!busy && tail < 1.0e-6)
+            advWasActive = false; // the FX tails have died
+        processBusFilter(out, n);
+        const double gain = dbToGain(settings.gainDb);
+        if (!wasActive)
+            busGain = gain;
+        const double glide = 1.0 - std::exp(-1.0 / (0.01 * sampleRate));
+        for (int i = 0; i < n; ++i)
+        {
+            busGain += glide * (gain - busGain);
+            out[i] = static_cast<float>(out[i] * busGain);
+            if (side != nullptr)
+                side[i] += static_cast<float>(0.5 * (advLeft[static_cast<size_t>(i)] - advRight[static_cast<size_t>(i)]) * busGain);
+        }
+        return;
+    }
     const double step = lfoHz() / sampleRate;
     for (int i = 0; i < n; ++i)
     {

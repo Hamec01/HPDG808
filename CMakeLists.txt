@@ -39,6 +39,8 @@ target_sources(HPDG808
         Source/Bass808/Bass808Preview.cpp
         Source/Bass808/Bass808Editor.cpp
         Source/Bass808/Bass808Screen.cpp
+        Source/Bass808/BassAdvanced.cpp
+        Source/Bass808/BassAdvancedParams.cpp
         Source/Bass808/BassEngine.cpp
         Source/Bass808/BassDrawWave.cpp
         Source/Bass808/BassSample.cpp
@@ -77,6 +79,7 @@ if (BUILD_TESTING)
         Tests/Bass808PresetsLab.cpp
         Tests/Bass808MemphisLab.cpp
         Tests/Bass808Golden.cpp
+        Tests/Bass808AdvancedLab.cpp
     )
     target_include_directories(HPDG_Bass808Snapshot PRIVATE Source)
     target_link_libraries(HPDG_Bass808Snapshot
